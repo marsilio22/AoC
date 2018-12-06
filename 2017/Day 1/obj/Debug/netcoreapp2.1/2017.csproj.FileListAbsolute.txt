@@ -1,0 +1,11 @@
+C:\dev\AoC\2017\bin\Debug\netcoreapp2.1\2017.deps.json
+C:\dev\AoC\2017\bin\Debug\netcoreapp2.1\2017.runtimeconfig.json
+C:\dev\AoC\2017\bin\Debug\netcoreapp2.1\2017.runtimeconfig.dev.json
+C:\dev\AoC\2017\bin\Debug\netcoreapp2.1\2017.dll
+C:\dev\AoC\2017\bin\Debug\netcoreapp2.1\2017.pdb
+C:\dev\AoC\2017\obj\Debug\netcoreapp2.1\2017.csprojAssemblyReference.cache
+C:\dev\AoC\2017\obj\Debug\netcoreapp2.1\2017.csproj.CoreCompileInputs.cache
+C:\dev\AoC\2017\obj\Debug\netcoreapp2.1\2017.AssemblyInfoInputs.cache
+C:\dev\AoC\2017\obj\Debug\netcoreapp2.1\2017.AssemblyInfo.cs
+C:\dev\AoC\2017\obj\Debug\netcoreapp2.1\2017.dll
+C:\dev\AoC\2017\obj\Debug\netcoreapp2.1\2017.pdb
