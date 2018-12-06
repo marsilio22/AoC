@@ -118,33 +118,6 @@ namespace Day_6
 
             List<char> edgeValues = new List<char>();
 
-            // for(int i = 0; i < biggestX; i++){
-            //     if (!edgeValues.Contains(results[(i, 0)]))
-            //     {
-            //         edgeValues.Add(results[(i, 0)]);
-            //     }
-
-            //     if (!edgeValues.Contains(results[(i, biggestY - 1)]))
-            //     {
-            //         edgeValues.Add(results[(i, biggestY - 1)]);
-            //     }
-            // }
-
-            
-            // for(int i = 0; i < biggestY; i++){
-            //     if (!edgeValues.Contains(results[(0, i)]))
-            //     {
-            //         edgeValues.Add(results[(0, i)]);
-            //     }
-
-            //     if (!edgeValues.Contains(results[(biggestX - 1, i)]))
-            //     {
-            //         edgeValues.Add(results[(biggestX - 1, i)]);
-            //     }
-            // }
-
-            // var validCoordinates = namedCoordinates.Where(co => !edgeValues.Contains(co.Value));
-
             Console.WriteLine($"number < 10000 = {results.Count(r => r.Value < 10000)}");
             
         }
