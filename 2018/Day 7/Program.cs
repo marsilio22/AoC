@@ -29,6 +29,7 @@ namespace Day_7
             {
                 steps.Single(s => s.Id == c).PrecedingSteps = 
                     steps.Where(s => stepPrecedents.Where(p => p.after == c).Select(p => p.before).ToList().Contains(s.Id)).ToList();
+                steps.Single(s => s.Id == c).TimeToComplete = 61 + c - 'A';
             }
 
             Part1(steps);
@@ -36,7 +37,22 @@ namespace Day_7
 
         public static void Part1(List<Step> steps)
         {
+            List<Step> result = new List<Step>();
 
+            while(result.Count < steps.Count)
+            {
+                var contenders = 
+                    steps.Where(s => 
+                        !result.Contains(s) && 
+                        s.PrecedingSteps.All(p => 
+                            result.Contains(p)
+                        )
+                    );
+
+                result.Add(contenders.OrderBy(c => c.Id).First());
+            }
+
+            Console.WriteLine(string.Join('\0', result.Select(r => r.Id)));
         }
 
         // public static void Part1(List<(string before, string after)> steps){
