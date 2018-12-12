@@ -27,26 +27,28 @@ namespace Day_11
             }
 
             Dictionary<int, (int x, int y, int value)> largestCoordsBySquareSize = new Dictionary<int, (int x, int y, int value)>();
-
-            for (int i = 0; i < 300; i++)
+            (int x, int y, int squareSize, int value) biggestBiggestValueSoFar = (0, 0, 0, 0);
+            for (int i = 0; i < 300 ; i++)
             {
                 Console.WriteLine($"Calculating for {i}");
-                Dictionary<(int x, int y), int> result = new Dictionary<(int x, int y), int>();
+                //(int x, int y, int value) biggestValueSoFar = (0, 0, 0);
 
                 for (int j = 0; j < 300 - i; j++){
                     for (int k = 0; k < 300 - i; k++){
-                        result[(j, k)] = ComputeSquare(j, k, i, grid);
+                        var val = ComputeSquare(j, k, i, grid);
+                        if (val > biggestBiggestValueSoFar.value)
+                        {
+                            biggestBiggestValueSoFar = (j, k, i, val);
+                        }
                     }
                 }
 
-                var largestValue = result.OrderByDescending(v => v.Value).First();
-
-                largestCoordsBySquareSize[i] = (largestValue.Key.x, largestValue.Key.y, largestValue.Value);
+                //largestCoordsBySquareSize[i] = (biggestValueSoFar.x, biggestValueSoFar.y, biggestValueSoFar.value);
             }
 
-            var largestLargestValue = largestCoordsBySquareSize.OrderByDescending(v => v.Value.value).First();
-
-            Console.WriteLine(largestLargestValue.Value.x+ "," + largestLargestValue.Value.y + "," + largestLargestValue.Key);
+            //var largestLargestValue = largestCoordsBySquareSize.OrderByDescending(v => v.Value.value).First();
+            Console.WriteLine(biggestBiggestValueSoFar.x + "," + biggestBiggestValueSoFar.y + "," + biggestBiggestValueSoFar.squareSize);
+            // Console.WriteLine(largestLargestValue.Value.x+ "," + largestLargestValue.Value.y + "," + largestLargestValue.Key);
         }
 
         public static int ComputeSquare(int x, int y, int squareSize, Dictionary<(int x, int y), int> data)
