@@ -3,15 +3,18 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 
-namespace Day_12
+namespace ConsoleApp1
 {
     class Program
     {
         static void Main(string[] args)
         {
+            Console.ReadLine();
             var lines = File.ReadAllLines("./input.txt");
 
-            var initialState = lines[0].Split(':')[1].Trim();
+            string fourHundredDots = "................................................................................................................................................................................................................................................................................................................................................................................................................";
+
+            var initialState = fourHundredDots + lines[0].Split(':')[1].Trim() + fourHundredDots;
 
             Dictionary<string, char> rules = new Dictionary<string, char>();
 
@@ -24,12 +27,13 @@ namespace Day_12
 
             Dictionary<int, string> generations = new Dictionary<int, string>{{0, initialState}};
 
-            for (int i = 1; i <= 20; i++)
+            for (int i = 1; i <= 1000; i++)
             {
                 var nextGen = GetNextGeneration(generations[i-1], rules);
                 generations.Add(i, nextGen);
-                Console.WriteLine(nextGen);
             }
+
+            //File.WriteAllLines(@"C:\dev\test\ConsoleApp1\ConsoleApp1\output.txt", generations.Values);
 
             var final = generations.Last().Value.ToCharArray();
             var offset = final.Length - initialState.Length;
@@ -41,25 +45,48 @@ namespace Day_12
                     result += (int)(i - ((double)offset / 2));
                 }
             }
+            
+
             Console.WriteLine(result);
+
+
+            string firstStableLine = "............................................####.#.....###.#.....####.#.....###.#.....###.#.....###.#....####.#.....###.#....####.#....####.#.....###.#.....####.#...####.#....###.#.....####.#....###.#.....###.#.....####.#....####.#.............................................................................................................................................................................................................................................................................";
+            long result2 = 0;
+
+            for (int i = 0; i < firstStableLine.Length; i++)
+            {
+                if (firstStableLine[i] == '#')
+                {
+                    result2 += i + 50000000000 -134;
+                }
+            }
+
+            Console.WriteLine(result2);
+            
+            Console.ReadLine();
         }
 
-        public static string GetNextGeneration(string currentGeneration, Dictionary<string, char> rules){
-            currentGeneration = "....." + currentGeneration + ".....";
-            var array = currentGeneration.ToCharArray();
-
+        public static string GetNextGeneration(string currentGeneration, Dictionary<string, char> rules)
+        {
             string result = string.Empty;
-            for (int i = 2; i < currentGeneration.Length - 2; i++)
+            for (int i = 0; i < currentGeneration.Length; i++)
             {
-                var important5 = 
-                    currentGeneration[i-2].ToString() +
-                    currentGeneration[i-1].ToString() +
-                    currentGeneration[i].ToString() +
-                    currentGeneration[i+1].ToString() +
-                    currentGeneration[i+2].ToString();
+                if (i - 2 < 0 || i + 2 >= currentGeneration.Length)
+                {
+                    result += '.';
+                    continue;
+                }
+
+                var important5 =
+                    currentGeneration[i - 2].ToString() +
+                    currentGeneration[i - 1] +
+                    currentGeneration[i] +
+                    currentGeneration[i + 1] +
+                    currentGeneration[i + 2];
 
                 result += rules[important5];
             }
+
             return result;
         }
     }
