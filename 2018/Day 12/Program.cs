@@ -9,7 +9,6 @@ namespace ConsoleApp1
     {
         static void Main(string[] args)
         {
-            Console.ReadLine();
             var lines = File.ReadAllLines("./input.txt");
 
             string fourHundredDots = "................................................................................................................................................................................................................................................................................................................................................................................................................";
@@ -26,44 +25,37 @@ namespace ConsoleApp1
             }
 
             Dictionary<int, string> generations = new Dictionary<int, string>{{0, initialState}};
-
-            for (int i = 1; i <= 1000; i++)
+            int count = 1;
+            while (true)
             {
-                var nextGen = GetNextGeneration(generations[i-1], rules);
-                generations.Add(i, nextGen);
-            }
+                var nextGen = GetNextGeneration(generations[count - 1], rules);
+                generations.Add(count, nextGen);
 
-            //File.WriteAllLines(@"C:\dev\test\ConsoleApp1\ConsoleApp1\output.txt", generations.Values);
+                var firstHash = nextGen.IndexOf('#');
+                var lastHash = nextGen.LastIndexOf('#');
 
-            var final = generations.Last().Value.ToCharArray();
-            var offset = final.Length - initialState.Length;
-            int result = 0;
-            for (int i = 0; i < final.Length; i++)
-            {
-                if (final[i] == '#')
+                if (generations[count - 1].Contains(generations[count].Substring(firstHash, lastHash - firstHash)))
                 {
-                    result += (int)(i - ((double)offset / 2));
+                    break;
                 }
+                count++;
             }
-            
 
-            Console.WriteLine(result);
+            // File.WriteAllLines("./output.txt", generations.Values);
 
-
-            string firstStableLine = "............................................####.#.....###.#.....####.#.....###.#.....###.#.....###.#....####.#.....###.#....####.#....####.#.....###.#.....####.#...####.#....###.#.....####.#....###.#.....###.#.....####.#....####.#.............................................................................................................................................................................................................................................................................";
+            string firstStableLine = generations[count - 1].Substring(400); // remove the 400 dots from the front that we don't care about
+            long finalForecastGeneration = 50000000000 - (count - 1);
             long result2 = 0;
 
             for (int i = 0; i < firstStableLine.Length; i++)
             {
                 if (firstStableLine[i] == '#')
                 {
-                    result2 += i + 50000000000 -134;
+                    result2 += i + finalForecastGeneration;
                 }
             }
 
             Console.WriteLine(result2);
-            
-            Console.ReadLine();
         }
 
         public static string GetNextGeneration(string currentGeneration, Dictionary<string, char> rules)
