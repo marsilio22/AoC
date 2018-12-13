@@ -68,10 +68,10 @@ namespace Day_13
                     switch (cart.DirectionOfTravel)
                     {
                         case DirectionOfTravel.North:
-                            nextCoordinate = (cartX, cartY + 1);
+                            nextCoordinate = (cartX, cartY - 1);
                             break;
                         case DirectionOfTravel.South:
-                            nextCoordinate = (cartX, cartY - 1);
+                            nextCoordinate = (cartX, cartY + 1);
                             break;
                         case DirectionOfTravel.East:
                             nextCoordinate = (cartX + 1, cartY);
