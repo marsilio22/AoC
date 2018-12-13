@@ -63,6 +63,10 @@ namespace Day_13
                 carts = carts.OrderBy(c => c.Y).ThenBy(c => c.X).ToList();
                 foreach (var cart in carts)
                 {
+                    if (cart.Removed){
+                        continue;
+                    }
+
                     (int cartX, int cartY) = (cart.X, cart.Y);
                     (int x, int y) nextCoordinate;
                     switch (cart.DirectionOfTravel)
@@ -84,8 +88,19 @@ namespace Day_13
                     }
 
                     if (map[nextCoordinate].ContainsCart){
-                        crash = true;
-                        Console.WriteLine($"{nextCoordinate.x},{nextCoordinate.y}");
+                        // crash = true;
+                        Console.WriteLine($"Crash at {nextCoordinate.x},{nextCoordinate.y}");
+
+                        cart.Removed = true;
+                        carts.Single(c => c.X == nextCoordinate.x && c.Y == nextCoordinate.y).Removed = true;
+                        map[nextCoordinate].ContainsCart = false;
+                        map[(cartX, cartY)].ContainsCart = false;
+
+                        if (carts.Count(c => !c.Removed) == 1){
+                            var lastCart = carts.Single(c => !c.Removed);
+                            Console.WriteLine($"Last cart at {lastCart.X},{lastCart.Y} travelling {lastCart.DirectionOfTravel}");
+                            return;
+                        }
                     }
                     else
                     {
@@ -225,6 +240,7 @@ namespace Day_13
         public DirectionOfTravel DirectionOfTravel { get; set; } 
 
         public TurnDirection NextTurnDirection { get; set; }
+        public bool Removed { get; set; }
     }
 
     public enum DirectionOfTravel
