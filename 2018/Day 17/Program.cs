@@ -42,7 +42,11 @@ namespace Day_17
                             Y = i,
                             IsClay = true
                         };
-                        coords.Add(coord);
+
+                        if (!coords.Any(c => c.X == coord.X && c.Y == coord.Y))
+                        {
+                            coords.Add(coord);
+                        }
                     }
                 }
                 else if (line.StartsWith("y"))
@@ -59,7 +63,11 @@ namespace Day_17
                             Y = y,
                             IsClay = true
                         };
-                        coords.Add(coord);
+                        
+                        if (!coords.Any(c => c.X == coord.X && c.Y == coord.Y))
+                        {
+                            coords.Add(coord);
+                        }
                     }
                 }
             }
@@ -76,10 +84,7 @@ namespace Day_17
             while (waterXYs.Any()){
                 for(int k = 0; k < waterXYs.Count; k++)
                 {
-                    if (coords.Count == 21568)
-                    {
-                        Print(coords);
-                    }
+                    Print(coords);
 
                     var xy = waterXYs[k];
                     // flow water down from this x
@@ -105,7 +110,7 @@ namespace Day_17
                         break;
                     }
 
-                    var minY = coords.Where(c => c.X == xy.x && c.IsClay).Min(c => c.Y); // TODO check that there are any before doing min
+                    var minY = coords.Where(c => c.X == xy.x && c.IsClay && c.Y >= xy.y).Min(c => c.Y); // TODO check that there are any before doing min
                     
                     for (int i = xy.y; i < minY; i++)
                     {
@@ -212,6 +217,7 @@ namespace Day_17
                                         if (coordinate.Y < maximumY && coordinate.Y > minimumY)
                                         {
                                             waterXYs.Add((coordinate.X, coordinate.Y));
+                                            waterXYs = waterXYs.Distinct().ToList();
                                             k = -1;
                                         }
                                         break;
@@ -221,8 +227,9 @@ namespace Day_17
 
                             for (int i = 0;; i++)
                             {
+                                //var test = coords.Where(c => c.Y == minY && c.X == xy.x + i).ToList();
                                 var block = coords.SingleOrDefault(c => c.Y == minY && c.X == xy.x + i);
-                                // left, take i away. Break when i the block is null, then do right
+                                // right, add i. Break when i the block is null, then stop
                                 if (block != null && (block.IsClay || block.ContainsWater))
                                 {
                                     // Add a hascontainedwater cell above the one described above
@@ -262,6 +269,7 @@ namespace Day_17
                                         if (coordinate.Y < maximumY && coordinate.Y > minimumY)
                                         {
                                             waterXYs.Add((coordinate.X, coordinate.Y));
+                                            waterXYs = waterXYs.Distinct().ToList();
                                             k = -1;
                                         }
                                         break;
@@ -275,8 +283,11 @@ namespace Day_17
                 }
             }
 
+            // Part 1
             Console.WriteLine(coords.Count(c => (c.ContainsWater || c.HasContainedWater) && c.Y <= maximumY && c.Y >= minimumY));
-            Console.ReadLine();
+
+            // Part 2
+            Console.WriteLine(coords.Count(c => (c.ContainsWater && c.Y <= maximumY && c.Y >= minimumY)));
         }
 
         static void Print(List<Coordinate> coords)
@@ -302,14 +313,14 @@ namespace Day_17
                     }
                     else
                     {
-                        sb.Append('.');
+                        sb.Append(' ');
                     }
                 }
 
                 sb.AppendLine();
             }
 
-            Console.WriteLine(sb.ToString());
+            File.WriteAllText("./output", sb.ToString());
         }
     }
 
