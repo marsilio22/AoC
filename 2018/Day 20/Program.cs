@@ -34,7 +34,8 @@ namespace Day_20
             var curr = currentStartingLocations.Dequeue();
             var character  = curr.CharactersFromHere.Dequeue();
             var index = 0;
-            
+            var depth = 0;
+
             while (character != '$')
             {
                 while(character != '(' && character != '|' && character != ')' && character != '$')
@@ -67,7 +68,9 @@ namespace Day_20
                     coord.Adjacents.Add(curr);
                     curr.Adjacents.Add(coord);
 
+                    coord.CharactersFromHere = curr.CharactersFromHere;
                     coord.Index = index;
+                    coord.Depth = depth;
 
                     map.AddCoordinate(coord);
 
@@ -80,7 +83,8 @@ namespace Day_20
                 {
                     openBracketLocations.Push(curr);
                     character = curr.CharactersFromHere.Dequeue();
-                    index ++;
+                    index++;
+                    depth++;
                     continue;
                 }
                 else if (character == '|')
@@ -93,25 +97,67 @@ namespace Day_20
                 }
                 else if (character == ')')
                 {
-                    openBracketLocations.Pop();
-                    var otherCurr = curr;
-                    if(openBracketLocations.TryPeek(out curr)){
-                        character = curr.CharactersFromHere.Dequeue();
-                        index ++;
+                    if (openBracketLocations.Count != 0)
+                    {
+                        openBracketLocations.Pop();
+                        depth--;
                     }
                     else
                     {
-                        character = otherCurr.CharactersFromHere.Dequeue();
-                        index ++;
+                        var otherCurr = curr;
+
+                        if (openBracketLocations.TryPeek(out curr))
+                        {
+                            character = curr.CharactersFromHere.Dequeue();
+                            index++;
+                        }
+                        else
+                        {
+                            character = otherCurr.CharactersFromHere.Dequeue();
+                            curr = otherCurr;
+                            index++;
+                        }
+
+                        depth--;
                     }
                 }
                 
                 if (character == '$')
                 {
+                    currentStartingLocations = new Queue<Coordinate>(currentStartingLocations.ToList().Distinct());
                     if(currentStartingLocations.TryDequeue(out curr))
                     {
+                        curr.CharactersFromHere = new Queue<char>(line.ToList().GetRange(curr.Index, line.Count - curr.Index));
+                        index = curr.Index;
+
+                        while (true)
+                        {
+                            character = curr.CharactersFromHere.Dequeue();
+                            index++;
+                            int count = 0;
+                            if (character == '(')
+                            {
+                                count++;
+                            }
+
+                            if (character == ')')
+                            {
+                                if (count == 0)
+                                {
+                                    curr.CharactersFromHere.Dequeue();
+                                    index++;
+                                    depth = curr.Depth;
+                                    break;
+                                }
+                                else if (count != 0)
+                                {
+                                    count--;
+                                }
+                            }
+                            
+                        }
+
                         character = curr.CharactersFromHere.Dequeue();
-                        continue;
                     }
                     else
                     {
@@ -134,12 +180,62 @@ namespace Day_20
         }
     }
 
-    public class Coordinate
+    public class Coordinate : IEquatable<Coordinate>
     {
         public int X { get; set; }
         public int Y { get; set; }
         public Queue<char> CharactersFromHere { get; set; }
         public int Index { get; set; }
         public List<Coordinate> Adjacents { get; set; } = new List<Coordinate>();
+        public int Depth { get; set; }
+
+        /// <summary>Indicates whether the current object is equal to another object of the same type.</summary>
+        /// <param name="other">An object to compare with this object.</param>
+        /// <returns>true if the current object is equal to the <paramref name="other">other</paramref> parameter; otherwise, false.</returns>
+        public bool Equals(Coordinate other)
+        {
+            if (ReferenceEquals(null, other)) return false;
+            if (ReferenceEquals(this, other)) return true;
+            return X == other.X && Y == other.Y;
+        }
+
+        /// <summary>Determines whether the specified object is equal to the current object.</summary>
+        /// <param name="obj">The object to compare with the current object.</param>
+        /// <returns>true if the specified object  is equal to the current object; otherwise, false.</returns>
+        public override bool Equals(object obj)
+        {
+            if (ReferenceEquals(null, obj)) return false;
+            if (ReferenceEquals(this, obj)) return true;
+            if (obj.GetType() != this.GetType()) return false;
+            return Equals((Coordinate) obj);
+        }
+
+        /// <summary>Serves as the default hash function.</summary>
+        /// <returns>A hash code for the current object.</returns>
+        public override int GetHashCode()
+        {
+            unchecked
+            {
+                return (X * 397) ^ Y;
+            }
+        }
+
+        /// <summary>Returns a value that indicates whether the values of two <see cref="T:Day_20.Coordinate" /> objects are equal.</summary>
+        /// <param name="left">The first value to compare.</param>
+        /// <param name="right">The second value to compare.</param>
+        /// <returns>true if the <paramref name="left" /> and <paramref name="right" /> parameters have the same value; otherwise, false.</returns>
+        public static bool operator ==(Coordinate left, Coordinate right)
+        {
+            return Equals(left, right);
+        }
+
+        /// <summary>Returns a value that indicates whether two <see cref="T:Day_20.Coordinate" /> objects have different values.</summary>
+        /// <param name="left">The first value to compare.</param>
+        /// <param name="right">The second value to compare.</param>
+        /// <returns>true if <paramref name="left" /> and <paramref name="right" /> are not equal; otherwise, false.</returns>
+        public static bool operator !=(Coordinate left, Coordinate right)
+        {
+            return !Equals(left, right);
+        }
     }
 }
