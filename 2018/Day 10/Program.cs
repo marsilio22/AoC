@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Threading;
 
 namespace Day_10
 {
@@ -64,6 +65,8 @@ namespace Day_10
 
             for(int i = -10; i < 0; i++){
                 WriteState(states[states.Count + i]);
+                Thread.Sleep(500);
+                Console.Clear();
             }
         }
 
