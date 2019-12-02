@@ -9,7 +9,7 @@ namespace Day_2 {
             var line = File.ReadLines ("./input.txt").First ();
 
             // int code program
-            var intcodeProgram = line.Split (',').Select (i => int.Parse (i)).ToList ();
+            var intcodeProgram = line.Split (',').Select (i => int.Parse (i)).ToList();
 
             // part 1 - recreate 1202 error
             Console.WriteLine (Calculate (intcodeProgram.ToList(), 12, 2));
@@ -18,17 +18,17 @@ namespace Day_2 {
             int soughtValue = 19690720; // puzzle input
 
             // Try noun and verb values between 0 and 100 until we have the desired value
-            for (int i = 0; i < 100; i++) {
-                for (int j = 0; j < 100; j++) {
+            for (int noun = 0; noun < 100; noun++) {
+                for (int verb = 0; verb < 100; verb++) {
                     try {
-                        var answer = Calculate (intcodeProgram.ToList(), i, j);
+                        var answer = Calculate(intcodeProgram.ToList(), noun, verb);
 
                         if (answer == soughtValue) 
                         {
-                            Console.WriteLine ($"{i}, {j}");
+                            Console.WriteLine ($"{noun}, {verb}");
                         }
                     } catch (Exception e){
-                        Console.WriteLine($"{i}, {j} caused an exception {e.Message}");
+                        Console.WriteLine($"{noun}, {verb} caused an exception {e.Message}");
                     }
                 }
             }
