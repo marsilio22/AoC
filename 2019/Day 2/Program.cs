@@ -45,13 +45,15 @@ namespace Day_2 {
             intcode[1] = noun;
             intcode[2] = verb;
 
-            for (int i = 0; intcode[i] != 99; i += 4) {
+            for (int i = 0; intcode[i] != 99;) {
                 switch (intcode[i]) {
                     case 1:
                         intcode[intcode[i + 3]] = intcode[intcode[i + 2]] + intcode[intcode[i + 1]];
+                        i += 4;
                         break;
                     case 2:
                         intcode[intcode[i + 3]] = intcode[intcode[i + 2]] * intcode[intcode[i + 1]];
+                        i += 4;
                         break;
                     case 99:
                         break;
