@@ -2,70 +2,63 @@
 using System.Collections.Generic;
 using System.Linq;
 
-namespace Day_4
-{
-    class Program
-    {
-        static void Main(string[] args)
-        {
-            // var start = "256310";
-            // var end = "732736";
+namespace Day_4 {
+    class Program {
+        static void Main (string[] args) {
+            var validPasswords = new List<string> ();
+            // input of a range of 256310-732736
+            for (int integerPassword = 256310; integerPassword <= 732736; integerPassword++) {
 
-            var validPasswords = new List<string>();
+                var stringPassword = integerPassword.ToString ();
 
-            for (int i = 256310; i <= 732736; i++){
+                for (int i = 0; i < 10; i++) {
+                    var ichar = i.ToString ();
+                    var indexesOfI = AllIndexesOf (stringPassword, ichar);
 
-                var password = i.ToString();
-
-                for (int j = 0; j < 10; j ++)
-                {
-                    var jchar = j.ToString();
-                    var indexesOfJ = AllIndexesOf(password, jchar);
+                    // Password must contain a repeated digit
                     bool passwordContainsRepeatedCharacter = false;
-
-                    for (int k = 0; k < indexesOfJ.Count - 1; k++){
-                        if (indexesOfJ[k] == indexesOfJ[k+1]-1){
+                    for (int j = 0; j < indexesOfI.Count - 1; j++) {
+                        if (indexesOfI[j] == indexesOfI[j + 1] - 1) {
                             passwordContainsRepeatedCharacter = true;
                             break;
                         }
                     }
 
+                    // Password must be non-strictly increasing
                     bool passwordIsIncreasing = true;
-                    for( int k=0; k < password.Length - 1;  k++)
-                    {
-                        if (int.Parse(password[k].ToString()) > int.Parse(password[k+1].ToString()))
-                        {
+                    for (int j = 0; j < stringPassword.Length - 1; j++) {
+                        if (int.Parse (stringPassword[j].ToString ()) > int.Parse (stringPassword[j + 1].ToString ())) {
                             passwordIsIncreasing = false;
                             break;
                         }
                     }
 
-                    if (passwordContainsRepeatedCharacter && passwordIsIncreasing && indexesOfJ.Count == 2){
-                        validPasswords.Add(password);
+                    // Password must contain only a pair of the repeated character. (part 2)
+                    bool exactly2RepeatedCharacters = indexesOfI.Count == 2;
+
+                    // Determine whether password is valid, and add it to the valid passwords
+                    // NB. This is inside the loop for i, so if a password has multiple repeated characters and is valid,
+                    // e.g. 112233, then it will be added multiple times.
+                    if (passwordContainsRepeatedCharacter && passwordIsIncreasing && exactly2RepeatedCharacters) {
+                        validPasswords.Add (stringPassword);
                     }
                 }
             }
 
-            Console.WriteLine(validPasswords.Distinct().Count()); // part 1
-
-
+            Console.WriteLine (validPasswords.Distinct ().Count ());
         }
 
-        public static List<int> AllIndexesOf(string str, string value) {
-            if (String.IsNullOrEmpty(value))
-{                throw new ArgumentException("the string to find may not be empty", "value");}
-            List<int> indexes = new List<int>();
+        public static List<int> AllIndexesOf (string str, string value) {
+            if (String.IsNullOrEmpty (value)) { throw new ArgumentException ("the string to find may not be empty", "value"); }
+            List<int> indexes = new List<int> ();
 
             for (int index = 0;; index += value.Length) {
-                index = str.IndexOf(value, index);
-                if (index == -1)
-                    {
-                        return indexes;
-                    }
-                indexes.Add(index);
+                index = str.IndexOf (value, index);
+                if (index == -1) {
+                    return indexes;
+                }
+                indexes.Add (index);
             }
-}
-
-
+        }
     }
 }
