@@ -111,6 +111,7 @@ namespace Day_7 {
             Console.WriteLine (largestOutput);
         }
 
+
         /// <summary>
         /// Calculates the output state of the given set of codes, for the given noun and verb
         /// </summary>
@@ -122,6 +123,8 @@ namespace Day_7 {
         /// </returns>
         public static (int returnValue, bool didHalt, int currentIndex) Calculate (List<int> intcode, Queue<int> input, int startingIndex) {
             var returnValue = 0;
+            var relativeBase = 0;
+
             for (int i = startingIndex;;) {
                 var opcode = intcode[i].ToString ();
                 string instruction, modes;
@@ -141,17 +144,30 @@ namespace Day_7 {
                 modeB = int.Parse (modes[1].ToString ());
                 modeA = int.Parse (modes[0].ToString ());
 
+
+                int parameterA = 0, parameterB= 0, parameterC= 0;
+                // Check if the opcode takes 0, 1, 2, or 3 arguments, and initialise the appripriate mode values
+                // parameterA = GetParameterForMode (modeA, intcode, relativeBase, i, 3);
+                var oneParameterOpcodes = new []{9};
+                var twoParameterOpcodes = new []{1, 2, 5, 6, 7, 8};
+                if (twoParameterOpcodes.Contains(INTstruction)){
+                    parameterB = GetParameterForMode (modeB, intcode, relativeBase, i, 2);
+                    parameterC = GetParameterForMode (modeC, intcode, relativeBase, i, 1);
+                }
+                if (oneParameterOpcodes.Contains(INTstruction)){
+                    parameterC = GetParameterForMode (modeC, intcode, relativeBase, i, 1);
+                }
                 switch (INTstruction) {
                     case 1: // Add
-                        intcode[intcode[i + 3]] =
-                            (modeB == 0 ? intcode[intcode[i + 2]] : intcode[i + 2]) +
-                            (modeC == 0 ? intcode[intcode[i + 1]] : intcode[i + 1]);
+                        intcode[intcode[i + 3]] = parameterC + parameterB;
+                        // (modeB == 0 ? intcode[intcode[i + 2]] : intcode[i + 2]) +
+                        // (modeC == 0 ? intcode[intcode[i + 1]] : intcode[i + 1]);
                         i += 4;
                         break;
                     case 2: // Multiply
-                        intcode[intcode[i + 3]] =
-                            (modeB == 0 ? intcode[intcode[i + 2]] : intcode[i + 2]) *
-                            (modeC == 0 ? intcode[intcode[i + 1]] : intcode[i + 1]);
+                        intcode[intcode[i + 3]] = parameterC * parameterB;
+                        // (modeB == 0 ? intcode[intcode[i + 2]] : intcode[i + 2]) *
+                        // (modeC == 0 ? intcode[intcode[i + 1]] : intcode[i + 1]);
                         i += 4;
                         break;
                     case 3: // Input
@@ -168,30 +184,48 @@ namespace Day_7 {
                         i += 2;
                         break;
                     case 5: // Jump if true
-                        int test = modeC == 0 ? intcode[intcode[i + 1]] : intcode[i + 1];
-                        i = test == 0 ? i + 3 : (modeB == 0 ? intcode[intcode[i + 2]] : intcode[i + 2]);
+                        int test = parameterC;
+                        i = test == 0 ? i + 3 : parameterB;
                         break;
                     case 6: // Jump if false
-                        test = modeC == 0 ? intcode[intcode[i + 1]] : intcode[i + 1];
-                        i = test != 0 ? i + 3 : (modeB == 0 ? intcode[intcode[i + 2]] : intcode[i + 2]);
+                        test = parameterC;
+                        i = test != 0 ? i + 3 : parameterB;
                         break;
                     case 7: // Less Than
-                        bool condition = (modeB == 0 ? intcode[intcode[i + 2]] : intcode[i + 2]) >
-                            (modeC == 0 ? intcode[intcode[i + 1]] : intcode[i + 1]);
+                        bool condition = parameterC < parameterB;
+                        // (modeB == 0 ? intcode[intcode[i + 2]] : intcode[i + 2]) >
+                        // (modeC == 0 ? intcode[intcode[i + 1]] : intcode[i + 1]);
                         intcode[intcode[i + 3]] = condition ? 1 : 0;
                         i += 4;
                         break;
                     case 8: // Equals
-                        condition = (modeB == 0 ? intcode[intcode[i + 2]] : intcode[i + 2]) ==
-                            (modeC == 0 ? intcode[intcode[i + 1]] : intcode[i + 1]);
+                        condition = parameterC == parameterB;
+                        // (modeB == 0 ? intcode[intcode[i + 2]] : intcode[i + 2]) ==
+                        // (modeC == 0 ? intcode[intcode[i + 1]] : intcode[i + 1]);
                         intcode[intcode[i + 3]] = condition ? 1 : 0;
                         i += 4;
+                        break;
+                    case 9: // Modify relative base
+                        relativeBase = parameterC;
+                        i += 2;
                         break;
                     case 99:
                         return (returnValue, true, 0);
                     default:
                         throw new ArgumentException ();
                 }
+            }
+        }
+
+        public static int GetParameterForMode (int mode, List<int> intcode, int relativeBase, int i, int indexIncrease) {
+            if (mode == 0) {
+                return intcode[intcode[i + indexIncrease]];
+            } else if (mode == 1) {
+                return intcode[i + indexIncrease];
+            } else if (mode == 2) {
+                return intcode[relativeBase + intcode[i + indexIncrease]];
+            } else {
+                throw new KeyNotFoundException ();
             }
         }
 
