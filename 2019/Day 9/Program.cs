@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -12,6 +12,11 @@ namespace Day_9 {
             input.Enqueue(1);
             // Part 1
             var result = Calculate(program, input, 0);
+            Console.WriteLine(result);
+
+            // Part 2
+            input.Enqueue(2);
+            result = Calculate(program, input, 0);
             Console.WriteLine(result);
         }
 
@@ -50,74 +55,70 @@ namespace Day_9 {
                 modeA = int.Parse (modes[0].ToString ());
 
 
-                long parameterA = 0, parameterB = 0, parameterC = 0;
+                long indexA = 0, indexB = 0, indexC = 0;
                 // Check if the opcode takes 0, 1, 2, or 3 arguments, and initialise the appripriate mode values
-                // parameterA = GetParameterForMode (modeA, intcode, relativeBase, i, 3);
-                var oneParameterOpcodes = new []{9};
-                var twoParameterOpcodes = new []{1, 2, 5, 6, 7, 8};
+                var oneParameterOpcodes = new [] {3, 4, 9};
+                var twoParameterOpcodes = new [] {5, 6};
+                var threeParameterOpcodes = new []{1, 2, 7, 8};
+
+                if (threeParameterOpcodes.Contains(INTstruction)){
+                    indexA = GetIndexForMode (modeA, intcode, relativeBase, i, 3);
+                    indexB = GetIndexForMode (modeB, intcode, relativeBase, i, 2);
+                    indexC = GetIndexForMode (modeC, intcode, relativeBase, i, 1);
+                }
                 if (twoParameterOpcodes.Contains(INTstruction)){
-                    parameterB = GetParameterForMode (modeB, intcode, relativeBase, i, 2);
-                    parameterC = GetParameterForMode (modeC, intcode, relativeBase, i, 1);
+                    indexB = GetIndexForMode (modeB, intcode, relativeBase, i, 2);
+                    indexC = GetIndexForMode (modeC, intcode, relativeBase, i, 1);
                 }
                 if (oneParameterOpcodes.Contains(INTstruction)){
-                    parameterC = GetParameterForMode (modeC, intcode, relativeBase, i, 1);
+                    indexC = GetIndexForMode (modeC, intcode, relativeBase, i, 1);
                 }
                 switch (INTstruction) {
                     case 1: // Add
-                        intcode[(int)intcode[i + 3]] = parameterC + parameterB;
-                        // (modeB == 0 ? intcode[intcode[i + 2]] : intcode[i + 2]) +
-                        // (modeC == 0 ? intcode[intcode[i + 1]] : intcode[i + 1]);
+                        intcode[(int)indexA] = intcode[(int)indexC] + intcode[(int)indexB];
                         i += 4;
                         break;
                     case 2: // Multiply
-                        intcode[(int)intcode[i + 3]] = parameterC * parameterB;
-                        // (modeB == 0 ? intcode[intcode[i + 2]] : intcode[i + 2]) *
-                        // (modeC == 0 ? intcode[intcode[i + 1]] : intcode[i + 1]);
+                        intcode[(int)indexA] = intcode[(int)indexC] * intcode[(int)indexB];
                         i += 4;
                         break;
                     case 3: // Input
                         if (!input.Any ()) {
                             return (returnValue, false, i);
                         }
-                        var index = intcode[i+1];
-                        // WHYYYYYYYYY
-                        if (modeC == 2){
-                            index = relativeBase + index;
-                        }
-                        intcode[(int)index] = input.Dequeue ();
+                        
+                        intcode[(int)indexC] = input.Dequeue ();
                         i += 2;
                         break;
                     case 4: // Output
-                        // For this day, don't actually return at this point, because we need to carry on
-                        // until we reach either a halt, or a 99.
-                        returnValue = intcode[(int)intcode[i + 1]];
-                        Console.WriteLine(returnValue);
+                        returnValue = intcode[(int)indexC];
+                        //Console.WriteLine(returnValue);
                         i += 2;
                         break;
                     case 5: // Jump if true
-                        long test = parameterC;
-                        i = test == 0 ? i + 3 : (int)parameterB;
+                        long test = intcode[(int)indexC];
+                        i = test == 0 ? i + 3 : (int)intcode[(int)indexB];
                         break;
                     case 6: // Jump if false
-                        test = parameterC;
-                        i = test != 0 ? i + 3 : (int)parameterB;
+                        test = intcode[(int)indexC];
+                        i = test != 0 ? i + 3 : (int)intcode[(int)indexB];
                         break;
                     case 7: // Less Than
-                        bool condition = parameterC < parameterB;
+                        bool condition = intcode[(int)indexC] < intcode[(int)indexB];
                         // (modeB == 0 ? intcode[intcode[i + 2]] : intcode[i + 2]) >
                         // (modeC == 0 ? intcode[intcode[i + 1]] : intcode[i + 1]);
-                        intcode[(int)intcode[i + 3]] = condition ? 1 : 0;
+                        intcode[(int)indexA] = condition ? 1 : 0;
                         i += 4;
                         break;
                     case 8: // Equals
-                        condition = parameterC == parameterB;
+                        condition = intcode[(int)indexC] == intcode[(int)indexB];
                         // (modeB == 0 ? intcode[intcode[i + 2]] : intcode[i + 2]) ==
                         // (modeC == 0 ? intcode[intcode[i + 1]] : intcode[i + 1]);
-                        intcode[(int)intcode[i + 3]] = condition ? 1 : 0;
+                        intcode[(int)indexA] = condition ? 1 : 0;
                         i += 4;
                         break;
                     case 9: // Modify relative base
-                        relativeBase = parameterC;
+                        relativeBase += intcode[(int)indexC];
                         i += 2;
                         break;
                     case 99:
@@ -128,13 +129,13 @@ namespace Day_9 {
             }
         }
 
-        public static long GetParameterForMode (int mode, List<long> intcode, long relativeBase, int i, int indexIncrease) {
+        public static long GetIndexForMode (int mode, List<long> intcode, long relativeBase, int i, int indexIncrease) {
             if (mode == 0) {
-                return intcode[(int)intcode[i + indexIncrease]];
+                return (int)intcode[i + indexIncrease];
             } else if (mode == 1) {
-                return intcode[i + indexIncrease];
+                return i + indexIncrease;
             } else if (mode == 2) {
-                return intcode[(int)(relativeBase + intcode[i + indexIncrease])];
+                return (int)(relativeBase + intcode[i + indexIncrease]);
             } else {
                 throw new KeyNotFoundException ();
             }
