@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -9,32 +9,26 @@ namespace Day10 {
             var input = File.ReadAllLines ("./input.txt");
 
             // exanple solution 33 at 5, 8
-            input = new []{"......#.#.",
-                           "#..#.#....",
-                           "..#######.",
-                           ".#.#.###..",
-                           ".#..#.....",
-                           "..#....#.#",
-                           "#..#....#.",
-                           ".##.#..###",
-                           "##...#..#.",
-                           ".#....####"};
+            // input = new []{"......#.#.",
+            //                "#..#.#....",
+            //                "..#######.",
+            //                ".#.#.###..",
+            //                ".#..#.....",
+            //                "..#....#.#",
+            //                "#..#....#.",
+            //                ".##.#..###",
+            //                "##...#..#.",
+            //                ".#....####"};
 
-
-
-            // yes, I know 1 is not prime.
-            var primesTo100 = "1,2,3,5,7,11,13,17,19,23,29,31,37,41,43,47,53,59,61,67,71,73,79,83,89,97".Split (",").Select (p => int.Parse (p)).ToList ();
             Dictionary < (int x, int y), char > map = new Dictionary < (int x, int y), char > ();
 
-            ICollection < (int x, int y) > primeComboCoordinateVectors = 
-                (from x in Enumerable.Range(1, 100)
-                 from y in Enumerable.Range(1, 100)
+            ICollection < (int x, int y) > uniqueVectors = 
+                (from x in Enumerable.Range(1, Math.Max(input.Length, input[0].Length))
+                 from y in Enumerable.Range(1, Math.Max(input.Length, input[0].Length))
                  where x != y && (x == 1 || y == 1 || Gcd(x, y) == 1)
                  select (x, y)).ToList ();
 
-            primeComboCoordinateVectors.Prepend ((1, 1));
-            primeComboCoordinateVectors.Prepend ((0, 1));
-            primeComboCoordinateVectors.Prepend ((1, 0));
+            uniqueVectors = uniqueVectors.Prepend ((1, 1)).Prepend ((0, 1)).Prepend ((1, 0)).ToList();
 
             for (int y = 0; y < input.Length; y++) {
                 var line = input[y];
@@ -43,72 +37,82 @@ namespace Day10 {
                 }
             }
 
-            // var actualUniqueDirections = new List<(int x, int y)>();
-            // foreach(var primeCoordVector in primeComboCoordinateVectors){
-            //     for (int count = 1; count < 100; count ++){
-            //         if (primeCoordVector.x % count == 0 &&
-            //             primeCoordVector.y % count == 0 &&
-            //             actualUniqueDirections.Contains((primeCoordVector.x / count, primeCoordVector.y / count)))
-            //         {
-            //             continue;
-            //         }
-            //         else
-            //         {
-            //             actualUniqueDirections.Add(primeCoordVector);
-            //             break;
-            //         }
-            //     }
-            // }
-
             var asteroids = map.Where (m => m.Value.Equals ('#')).ToDictionary (d => d.Key, d => d.Value);
-            int mostAsteroids = int.MinValue;
-            foreach (var asteroid in asteroids) {
-                int visibleAsteroidCount = 0;
+            var asteroidsVisibleToAsteroid = new Dictionary<(int x, int y), List<(int x, int y)>>();
 
-                foreach ((int x, int y) primeCoordVector in primeComboCoordinateVectors) {
-                    int numberOfSteps = 0;
+            int mostAsteroids = int.MinValue;
+            (int x, int y) bestAsteroid = (0, 0);
+            foreach (var asteroid in asteroids) {
+                asteroidsVisibleToAsteroid[asteroid.Key] = new List<(int x, int y)>();
+
+                List < (int x, int y) > doneCoordinates = new List < (int x, int y) > ();
+
+                foreach ((int x, int y) primeCoordVector in uniqueVectors) {
                     (int x, int y) coordinate = primeCoordVector;
-                    List < (int x, int y) > doneDirections = new List < (int x, int y) > ();
 
                     for (int direction = 0; direction < 4; direction++) {
-                        //coordinate = GetDirection (direction, primeCoordVector, numberOfSteps, asteroid.Key);
+                        var numberOfSteps = 1;
+                        coordinate = GetDirection (direction, primeCoordVector, numberOfSteps, asteroid.Key);
 
-                        if (doneDirections.Contains(coordinate)){
+                        if (doneCoordinates.Contains(coordinate)){
                             continue;
                         }
-                        doneDirections.Add(coordinate);
+                        doneCoordinates.Add(coordinate);
 
                         while (map.ContainsKey (coordinate)) {
                             if (asteroids.ContainsKey (coordinate)) {
-                                visibleAsteroidCount += 1;
+                                asteroidsVisibleToAsteroid[asteroid.Key].Add(coordinate);
+                                numberOfSteps = 1;
                                 break;
                             }
+
                             numberOfSteps += 1;
                             coordinate = GetDirection (direction, primeCoordVector, numberOfSteps, asteroid.Key);
                         }
                     }
                 }
-                Console.WriteLine (visibleAsteroidCount);
-                if (visibleAsteroidCount > mostAsteroids) {
-                    Console.WriteLine ($"Asteroid at {asteroid.Key.x}, {asteroid.Key.y} sees {visibleAsteroidCount} other asteroids");
-                    mostAsteroids = visibleAsteroidCount;
+                
+                Console.WriteLine($"Asteroid at {asteroid.Key.x}, {asteroid.Key.y}: {asteroidsVisibleToAsteroid[asteroid.Key].Distinct().Count()}");
+
+                if (asteroidsVisibleToAsteroid[asteroid.Key].Count > mostAsteroids) {
+                //    Console.WriteLine ($"Asteroid at {asteroid.Key.x}, {asteroid.Key.y} sees {visibleAsteroidCount} other asteroids");
+                    mostAsteroids = asteroidsVisibleToAsteroid[asteroid.Key].Count;
+                    bestAsteroid = asteroid.Key;
                 }
             }
 
-            Console.WriteLine ("Most " + mostAsteroids);
+            Console.WriteLine ($"Most asteroids visible was {mostAsteroids}, at asteroid {bestAsteroid.x}, {bestAsteroid.y}");
         }
-        public static (int x, int y) GetDirection (int direction, (int x, int y) coordinate, int numberOfSteps, (int x, int y) asteroidCoordinate) {
+        public static (int x, int y) GetDirection (int direction, (int x, int y) travelVector, int numberOfSteps, (int x, int y) asteroidCoordinate) {
             switch (direction) {
                 case 0:
-                    return (asteroidCoordinate.x + coordinate.x * numberOfSteps, asteroidCoordinate.y + coordinate.y * numberOfSteps);
+                    return (asteroidCoordinate.x + travelVector.x * numberOfSteps, asteroidCoordinate.y + travelVector.y * numberOfSteps);
                 case 1:
-                    return (asteroidCoordinate.x + -1 * coordinate.x * numberOfSteps, asteroidCoordinate.y + coordinate.y * numberOfSteps);
+                    return (asteroidCoordinate.x + -1 * travelVector.x * numberOfSteps, asteroidCoordinate.y + travelVector.y * numberOfSteps);
                 case 2:
-                    return (asteroidCoordinate.x + coordinate.x * numberOfSteps, asteroidCoordinate.y + -1 * coordinate.y * numberOfSteps);
+                    return (asteroidCoordinate.x + travelVector.x * numberOfSteps, asteroidCoordinate.y + -1 * travelVector.y * numberOfSteps);
                 case 3:
-                    return (asteroidCoordinate.x + -1 * coordinate.x * numberOfSteps, asteroidCoordinate.y + -1 * coordinate.y * numberOfSteps);
+                    return (asteroidCoordinate.x + -1 * travelVector.x * numberOfSteps, asteroidCoordinate.y + -1 * travelVector.y * numberOfSteps);
                 default:
-                    return (0, 0);
+                    throw new KeyNotFoundException();
+            }
+        }
+
+        public static void Draw((int x, int y) spaceBase, List<(int x, int y)> map, int squareSize){
+            for (int i = 0; i < squareSize; i ++){
+                for (int j = 0; j < squareSize; j++){
+                    if (map.Contains((j, i))){
+                        Console.Write('#');
+                    }
+                    else if (spaceBase.x == j && spaceBase.y == i)
+                    {
+                        Console.Write('X');
+                    }
+                    else{
+                        Console.Write('.');
+                    }
+                }
+                Console.WriteLine();
             }
         }
 
@@ -130,4 +134,4 @@ namespace Day10 {
             return m;
         }
     }
-}
+} 
