@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -18,8 +18,12 @@ namespace Day_11
         private (int x, int y) position = (0, 0);
         private List<long> program;
 
+        private IntcodeComputer computer;
+
         public Robot(List<long> program){
             this.program = program;
+
+            this.computer = new IntcodeComputer(program);
         }
 
         private int GetColourOfCurrentPosition(IDictionary<(int x, int y), int> map){
@@ -64,13 +68,12 @@ namespace Day_11
             }
         }
 
-        private (Queue<long> resultValues, bool didHalt, int currentIndex, long relativeBase) computerState = (new Queue<long>(), false, 0, 0);
-
         public void Run(IDictionary<(int x, int y), int> map){
             var lastDictionarySize = int.MinValue;
             var numberOfTimesDictionaryHasntChangedSize = 0;
+            bool hasHalted = false;
 
-            while(numberOfTimesDictionaryHasntChangedSize < 30000 && !computerState.didHalt){
+            while(numberOfTimesDictionaryHasntChangedSize < 30000 && !hasHalted){
                 if (map.Count() == lastDictionarySize){
                     numberOfTimesDictionaryHasntChangedSize ++;
                 }
@@ -81,36 +84,94 @@ namespace Day_11
                 var input = new Queue<long>();
                 input.Enqueue((long)currentPanelColour);
 
-                var stepResult = Calculate(program, input, computerState.currentIndex, computerState.relativeBase);
+                hasHalted = this.computer.Calculate(input);
                 
-                var colour = stepResult.returnValue.Dequeue();
-                var turn = stepResult.returnValue.Dequeue();
-                this.computerState = stepResult;
+                var colour = this.computer.ReturnValues.Dequeue();
+                var turn = this.computer.ReturnValues.Dequeue();
 
                 map[position] = (int)colour;
                 this.ChangeDirection((int)turn);
                 this.Move();
+                
+                // Printer.PrintMap(map);
             }
+        }
+    }
+
+    class Program
+    {
+        static void Main(string[] args)
+        {
+            var program = File.ReadAllLines("./input.txt") [0].Split (",").Select (i => long.Parse (i)).ToList ();
+
+            var robot = new Robot(program.ToList());
+
+            var map = new Dictionary<(int x, int y), int>();
+
+            // Part 1
+            robot.Run(map);
+            Console.WriteLine(map.Count);
+
+            // Part 2
+            var part2Map = new Dictionary<(int x, int y), int>();
+            part2Map[(0, 0)] = 1;
+
+            robot = new Robot(program.ToList());
+            robot.Run(part2Map);
+
+            Printer.PrintMap(part2Map);
+        }
+    }
+
+    static class Printer{
+        public static void PrintMap (IDictionary<(int x, int y), int> map){
+            var maxX = map.Select(m => m.Key.x).OrderByDescending(x => x).First();
+            var minX = map.Select(m => m.Key.x).OrderBy(x => x).First();
+            var maxY = map.Select(m => m.Key.y).OrderByDescending(y => y).First();
+            var minY = map.Select(m => m.Key.y).OrderBy(y => y).First();
+
+            for (int i = maxY; i >= minY; i--)
+            {
+                for (int j = minX; j <= maxX; j++){
+                    if (!map.ContainsKey((j, i)) || map[(j, i)] == 0){
+                        Console.Write("  ");
+                    }
+                    else if (map[(j, i)] == 1){
+                        Console.Write("■■");
+                    }
+                }
+                Console.WriteLine();
+            }
+        }
+    }
+
+    class IntcodeComputer{
+        private int currentIndex;
+        private long relativeBase;
+        private List<long> program;
+
+        public Queue<long> ReturnValues { get; }
+
+        public IntcodeComputer(List<long> program){
+            var tenThousand0s = new List<long>(new long[10000]);
+
+            this.program = program;
+            this.program.AddRange(tenThousand0s);
+
+            // set defaults
+            this.currentIndex = 0;
+            this.relativeBase = 0;
+            this.ReturnValues = new Queue<long>();
         }
 
         /// <summary>
         /// Calculates the output state of the given set of codes, for the given noun and verb
         /// </summary>
-        /// <returns>
-        /// A tuple containing: 
-        /// 1. The return value, if any
-        /// 2. A value indicating whether or not the process has halted (if not then it is awaiting more input)
-        /// 3. The value of the current index of the running program, if appropriate
+        /// <returns>A value indicating whether or not the process has halted (if not then it is awaiting more input)
         /// </returns>
-        private static (Queue<long> returnValue, bool didHalt, int currentIndex, long relativeBase) Calculate (List<long> intcode, Queue<long> input, int startingIndex, long relativeBase) {
-            Queue<long> returnValues = new Queue<long>();
-
-            // todo don't add 10000 entries EVERY time
-            var tenThousand0s = new List<long>(new long[10000]);
-            intcode.AddRange(tenThousand0s);
-
-            for (int i = startingIndex;;) {
-                var opcode = intcode[i].ToString ();
+        public bool Calculate (Queue<long> input) {
+            for (int i = currentIndex;;) {
+                var opcode = program[i].ToString ();
                 string instruction, modes;
                 if (opcode.Length > 2) {
                     instruction = opcode.Substring (opcode.Length - 2);
@@ -136,62 +197,63 @@ namespace Day_11
                 var threeParameterOpcodes = new []{1, 2, 7, 8};
 
                 if (threeParameterOpcodes.Contains(INTstruction)){
-                    indexA = GetIndexForMode (modeA, intcode, relativeBase, i, 3);
-                    indexB = GetIndexForMode (modeB, intcode, relativeBase, i, 2);
-                    indexC = GetIndexForMode (modeC, intcode, relativeBase, i, 1);
+                    indexA = GetIndexForMode (modeA, program, relativeBase, i, 3);
+                    indexB = GetIndexForMode (modeB, program, relativeBase, i, 2);
+                    indexC = GetIndexForMode (modeC, program, relativeBase, i, 1);
                 }
                 if (twoParameterOpcodes.Contains(INTstruction)){
-                    indexB = GetIndexForMode (modeB, intcode, relativeBase, i, 2);
-                    indexC = GetIndexForMode (modeC, intcode, relativeBase, i, 1);
+                    indexB = GetIndexForMode (modeB, program, relativeBase, i, 2);
+                    indexC = GetIndexForMode (modeC, program, relativeBase, i, 1);
                 }
                 if (oneParameterOpcodes.Contains(INTstruction)){
-                    indexC = GetIndexForMode (modeC, intcode, relativeBase, i, 1);
+                    indexC = GetIndexForMode (modeC, program, relativeBase, i, 1);
                 }
                 switch (INTstruction) {
                     case 1: // Add
-                        intcode[(int)indexA] = intcode[(int)indexC] + intcode[(int)indexB];
+                        program[(int)indexA] = program[(int)indexC] + program[(int)indexB];
                         i += 4;
                         break;
                     case 2: // Multiply
-                        intcode[(int)indexA] = intcode[(int)indexC] * intcode[(int)indexB];
+                        program[(int)indexA] = program[(int)indexC] * program[(int)indexB];
                         i += 4;
                         break;
                     case 3: // Input
                         if (!input.Any ()) {
-                            return (returnValues, false, i, relativeBase);
+                            this.currentIndex = i;
+                            return false;
                         }
                         
-                        intcode[(int)indexC] = input.Dequeue ();
+                        program[(int)indexC] = input.Dequeue ();
                         i += 2;
                         break;
                     case 4: // Output
-                        returnValues.Enqueue(intcode[(int)indexC]);
+                        ReturnValues.Enqueue(program[(int)indexC]);
                         i += 2;
                         break;
                     case 5: // Jump if true
-                        long test = intcode[(int)indexC];
-                        i = test == 0 ? i + 3 : (int)intcode[(int)indexB];
+                        long test = program[(int)indexC];
+                        i = test == 0 ? i + 3 : (int)program[(int)indexB];
                         break;
                     case 6: // Jump if false
-                        test = intcode[(int)indexC];
-                        i = test != 0 ? i + 3 : (int)intcode[(int)indexB];
+                        test = program[(int)indexC];
+                        i = test != 0 ? i + 3 : (int)program[(int)indexB];
                         break;
                     case 7: // Less Than
-                        bool condition = intcode[(int)indexC] < intcode[(int)indexB];
-                        intcode[(int)indexA] = condition ? 1 : 0;
+                        bool condition = program[(int)indexC] < program[(int)indexB];
+                        program[(int)indexA] = condition ? 1 : 0;
                         i += 4;
                         break;
                     case 8: // Equals
-                        condition = intcode[(int)indexC] == intcode[(int)indexB];
-                        intcode[(int)indexA] = condition ? 1 : 0;
+                        condition = program[(int)indexC] == program[(int)indexB];
+                        program[(int)indexA] = condition ? 1 : 0;
                         i += 4;
                         break;
                     case 9: // Modify relative base
-                        relativeBase += intcode[(int)indexC];
+                        relativeBase += program[(int)indexC];
                         i += 2;
                         break;
                     case 99:
-                        return (returnValues, true, 0, relativeBase);
+                        return true;
                     default:
                         throw new ArgumentException ();
                 }
@@ -207,51 +269,6 @@ namespace Day_11
                 return (int)(relativeBase + intcode[i + indexIncrease]);
             } else {
                 throw new KeyNotFoundException ();
-            }
-        }
-    }
-
-    class Program
-    {
-        static void Main(string[] args)
-        {
-            var program = File.ReadAllLines("./input.txt") [0].Split (",").Select (i => long.Parse (i)).ToList ();
-
-            var robot = new Robot(program.ToList());
-
-            var map = new Dictionary<(int x, int y), int>();
-
-            // Part 1
-            robot.Run(map);
-
-
-            // Part 2
-            var part2Map = new Dictionary<(int x, int y), int>();
-            part2Map[(0, 0)] = 1;
-
-            robot = new Robot(program.ToList());
-            robot.Run(part2Map);
-
-            PrintMap(part2Map);
-        }
-
-        static void PrintMap (Dictionary<(int x, int y), int> map){
-            var maxX = map.Select(m => m.Key.x).OrderByDescending(x => x).First();
-            var minX = map.Select(m => m.Key.x).OrderBy(x => x).First();
-            var maxY = map.Select(m => m.Key.y).OrderByDescending(y => y).First();
-            var minY = map.Select(m => m.Key.y).OrderBy(y => y).First();
-
-            for (int i = maxY; i >= minY; i--)
-            {
-                for (int j = minX; j <= maxX; j++){
-                    if (!map.ContainsKey((j, i)) || map[(j, i)] == 0){
-                        Console.Write(' ');
-                    }
-                    else if (map[(j, i)] == 1){
-                        Console.Write('#');
-                    }
-                }
-                Console.WriteLine();
             }
         }
     }
