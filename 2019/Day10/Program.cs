@@ -105,109 +105,54 @@ namespace Day10 {
                 }
             }
 
-            // while i = 0; i < 200
-            //     Delete closest upwards NaN
-            //     i ++;
-            //     for x > 0, y > 0
-            //         select distinct gradients, order by gradient descending
-            //         foreach gradient
-            //             blam the asteroid with the closest distance and that grad.
-            //             i ++;
-            //     Delete closest rightwards 0
-            //     i ++;
-            //     for x > 0, y < 0
-            //         select distinct gradients, order by gradient descending
-            //         foreach gradient
-            //             blam the asteroid with the closest distance and that grad.
-            //             i ++;
-            //     Delete closest downwards NaN
-            //     i ++;
-            //     for x < 0, y < 0
-            //         select distinct gradients, order by gradient descending
-            //         foreach gradient
-            //             blam the asteroid with the closest distance and that grad.
-            //             i ++;
-            //     Delete closest leftwards 0
-            //     i ++;
-            //     for x < 0, y > 0
-            //         select distinct gradients, order by gradient descending
-            //         foreach gradient
-            //             blam the asteroid with the closest distance and that grad.
-            //             i ++;
-
             int asteroidCount = 0;
 
             // TODO remove repetition in this loop...
             while (asteroidCount <= Math.Min(200, asteroids.Count - 1)){
                 var closestUpwardsNan = newMap.Where(m => double.IsNaN(m.Value.gradient) && m.Key.y < bestAsteroid.y).OrderBy(a => a.Value.distance).FirstOrDefault();
-                if (closestUpwardsNan.Value.distance != 0) // default value indication
-                {
-                    newMap.Remove(closestUpwardsNan.Key);
-                    asteroidCount ++; 
-                    Console.WriteLine($"Killed asteroid {asteroidCount} at coordinate {closestUpwardsNan.Key.x},{closestUpwardsNan.Key.y}");
-                }
-
+                DeleteSpecificAsteroid(closestUpwardsNan, newMap, ref asteroidCount);
                 var topRightQuadrant = newMap.Where(m => m.Key.x > bestAsteroid.x && m.Key.y < bestAsteroid.y).ToList();
-                var grads = topRightQuadrant.Select(q => q.Value.gradient).Distinct().OrderByDescending(g => g).ToList();
-                foreach(var grad in grads){
-                    var closestAsteroid = topRightQuadrant.Where(m => Math.Abs(m.Value.gradient - grad) < double.Epsilon).OrderBy(a => a.Value.distance).First();
-                    newMap.Remove(closestAsteroid.Key);
-                    asteroidCount ++;
-                    Console.WriteLine($"Killed asteroid {asteroidCount} at coordinate {closestAsteroid.Key.x},{closestAsteroid.Key.y}, grad: {closestAsteroid.Value.gradient}");
-                }
-
-
-
+                KillGradientAsteroidsInQuadrant(topRightQuadrant, newMap, ref asteroidCount);
 
                 var closestRightwards0 = newMap.Where(m => m.Value.gradient < double.Epsilon && m.Key.x > bestAsteroid.x).OrderBy(a => a.Value.distance).FirstOrDefault();
-                if(closestRightwards0.Value.distance != 0){
-                    newMap.Remove(closestRightwards0.Key);
-                    asteroidCount++;
-                    Console.WriteLine($"Killed asteroid {asteroidCount} at coordinate {closestRightwards0.Key.x},{closestRightwards0.Key.y}");
-                }
-
+                DeleteSpecificAsteroid(closestRightwards0, newMap, ref asteroidCount);
                 var bottomRightQuadrant = newMap.Where(m => m.Key.x > bestAsteroid.x && m.Key.y > bestAsteroid.y).ToList();
-                grads = bottomRightQuadrant.Select(q => q.Value.gradient).Distinct().OrderByDescending(g => g).ToList();
-                foreach(var grad in grads){
-                    var closestAsteroid = bottomRightQuadrant.Where(m => Math.Abs(m.Value.gradient - grad) < double.Epsilon).OrderBy(a => a.Value.distance).First();
-                    newMap.Remove(closestAsteroid.Key);
-                    asteroidCount++;
-                    Console.WriteLine($"Killed asteroid {asteroidCount} at coordinate {closestAsteroid.Key.x},{closestAsteroid.Key.y}, grad: {closestAsteroid.Value.gradient}");
-                }
-
+                KillGradientAsteroidsInQuadrant(bottomRightQuadrant, newMap, ref asteroidCount);
 
                 var closestDownwardsNan = newMap.Where(m => double.IsNaN(m.Value.gradient) && m.Key.y > bestAsteroid.y).OrderBy(a => a.Value.distance).FirstOrDefault();
-                if(closestDownwardsNan.Value.distance != 0){
-                    newMap.Remove(closestDownwardsNan.Key);
-                    asteroidCount++;
-                    Console.WriteLine($"Killed asteroid {asteroidCount} at coordinate {closestDownwardsNan.Key.x},{closestDownwardsNan.Key.y}");
-                }
-
+                DeleteSpecificAsteroid(closestDownwardsNan, newMap, ref asteroidCount);
                 var bottomLeftQuadrant = newMap.Where(m => m.Key.x < bestAsteroid.x && m.Key.y > bestAsteroid.y).ToList();
-                grads = bottomLeftQuadrant.Select(q => q.Value.gradient).Distinct().OrderByDescending(g => g).ToList();
-                foreach(var grad in grads){
-                    var closestAsteroid = bottomLeftQuadrant.Where(m => Math.Abs(m.Value.gradient - grad) < double.Epsilon).OrderBy(a => a.Value.distance).First();
-                    newMap.Remove(closestAsteroid.Key);
-                    asteroidCount++;
-                    Console.WriteLine($"Killed asteroid {asteroidCount} at coordinate {closestAsteroid.Key.x},{closestAsteroid.Key.y}, grad: {closestAsteroid.Value.gradient}");
-                }
-
+                KillGradientAsteroidsInQuadrant(bottomLeftQuadrant, newMap, ref asteroidCount);
 
                 var closestLeftwards0 = newMap.Where(m => m.Value.gradient < double.Epsilon && m.Key.x < bestAsteroid.x).OrderBy(a => a.Value.distance).FirstOrDefault();
-                if (closestLeftwards0.Value.distance != 0){
-                    newMap.Remove(closestLeftwards0.Key);
-                    asteroidCount++;
-                    Console.WriteLine($"Killed asteroid {asteroidCount} at coordinate {closestLeftwards0.Key.x},{closestLeftwards0.Key.y}");
-                }
-
+                DeleteSpecificAsteroid(closestLeftwards0, newMap, ref asteroidCount);
                 var topLeftQuadrant = newMap.Where(m => m.Key.x < bestAsteroid.x && m.Key.y < bestAsteroid.y).ToList();
-                grads = topLeftQuadrant.Select(q => q.Value.gradient).Distinct().OrderByDescending(g => g).ToList();
-                foreach(var grad in grads){
-                    var closestAsteroid = topLeftQuadrant.Where(m => Math.Abs(m.Value.gradient - grad) < double.Epsilon).OrderBy(a => a.Value.distance).First();
-                    newMap.Remove(closestAsteroid.Key);
-                    asteroidCount++;
-                    Console.WriteLine($"Killed asteroid {asteroidCount} at coordinate {closestAsteroid.Key.x},{closestAsteroid.Key.y}, grad: {closestAsteroid.Value.gradient}");
-                }
+                KillGradientAsteroidsInQuadrant(topLeftQuadrant, newMap, ref asteroidCount);
+            }
+        }
+
+        public static void DeleteSpecificAsteroid(KeyValuePair<(int x, int y), (double gradient, int distance)> asteroid, Dictionary<(int x, int y), (double gradient, int distance)> map, ref int asteroidCount){
+            if (asteroid.Value.distance != 0){
+                map.Remove(asteroid.Key);
+                asteroidCount ++;
+                PrintInfo(asteroidCount, asteroid.Key, asteroid.Value.gradient);
+            }
+        }
+
+        public static void KillGradientAsteroidsInQuadrant(List<KeyValuePair<(int x, int y), (double gradient, int distance)>> quadrant, Dictionary<(int x, int y), (double gradient, int distance)> map, ref int asteroidCount){
+            var grads = quadrant.Select(q => q.Value.gradient).Distinct().OrderByDescending(g => g).ToList();
+            foreach(var grad in grads){
+                var closestAsteroid = quadrant.Where(m => Math.Abs(m.Value.gradient - grad) < double.Epsilon).OrderBy(a => a.Value.distance).First();
+                map.Remove(closestAsteroid.Key);
+                asteroidCount++;
+                PrintInfo(asteroidCount, closestAsteroid.Key, closestAsteroid.Value.gradient);
+            }
+        }
+
+        public static void PrintInfo(int asteroidCount, (int x, int y) closestAsteroid, double closestAsteroidGradient){
+            if(asteroidCount % 50 == 0 && asteroidCount <= 200)
+            {
+                Console.WriteLine($"Killed asteroid {asteroidCount} at coordinate {closestAsteroid.x},{closestAsteroid.y}, grad: {closestAsteroidGradient}");
             }
         }
 
@@ -223,42 +168,6 @@ namespace Day10 {
                     return (asteroidCoordinate.x + -1 * travelVector.x * numberOfSteps, asteroidCoordinate.y + -1 * travelVector.y * numberOfSteps);
                 default:
                     throw new KeyNotFoundException();
-            }
-        }
-
-        public static void DrawAsteroidField((int x, int y) spaceBase, List<(int x, int y)> map, int squareSize){
-            for (int i = 0; i < squareSize; i ++){
-                for (int j = 0; j < squareSize; j++){
-                    if (map.Contains((j, i))){
-                        Console.Write('#');
-                    }
-                    else if (spaceBase.x == j && spaceBase.y == i)
-                    {
-                        Console.Write('X');
-                    }
-                    else{
-                        Console.Write('.');
-                    }
-                }
-                Console.WriteLine();
-            }
-        }
-
-        public static void DrawDistancesAndGradients((int x, int y) spaceBase, Dictionary<(int x, int y), (double gradient, int distance)> map, int squareSize){
-            for (int i = 0; i < squareSize; i ++){
-                for (int j = 0; j < squareSize; j++){
-                    if (map.ContainsKey((j, i))){
-                        Console.Write(Math.Round(map[(j, i)].gradient, 3).ToString().PadRight(6));
-                    }
-                    else if (spaceBase.x == j && spaceBase.y == i)
-                    {
-                        Console.Write("X".PadRight(6));
-                    }
-                    else{
-                        Console.Write(".".PadRight(6));
-                    }
-                }
-                Console.WriteLine();
             }
         }
 
@@ -278,6 +187,44 @@ namespace Day10 {
                 n = tmp;
             }
             return m;
+        }
+
+        // Debug tool
+        public static void DrawAsteroidField((int x, int y) spaceBase, List<(int x, int y)> map, int squareSize){
+            for (int i = 0; i < squareSize; i ++){
+                for (int j = 0; j < squareSize; j++){
+                    if (map.Contains((j, i))){
+                        Console.Write('#');
+                    }
+                    else if (spaceBase.x == j && spaceBase.y == i)
+                    {
+                        Console.Write('X');
+                    }
+                    else{
+                        Console.Write('.');
+                    }
+                }
+                Console.WriteLine();
+            }
+        }
+
+        // Debug tool
+        public static void DrawDistancesAndGradients((int x, int y) spaceBase, Dictionary<(int x, int y), (double gradient, int distance)> map, int squareSize){
+            for (int i = 0; i < squareSize; i ++){
+                for (int j = 0; j < squareSize; j++){
+                    if (map.ContainsKey((j, i))){
+                        Console.Write(Math.Round(map[(j, i)].gradient, 3).ToString().PadRight(6));
+                    }
+                    else if (spaceBase.x == j && spaceBase.y == i)
+                    {
+                        Console.Write("X".PadRight(6));
+                    }
+                    else{
+                        Console.Write(".".PadRight(6));
+                    }
+                }
+                Console.WriteLine();
+            }
         }
     }
 } 
