@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -7,7 +7,7 @@ namespace Day_12
 {
     public class Program
     {
-        static void Main (string[] args) {
+        public static List<Moon> CreateMoons(){
             var input = File.ReadAllLines("./input.txt");
             List<Moon> moons = new List<Moon>();
             
@@ -28,6 +28,11 @@ namespace Day_12
                 i++;
             }
 
+            return moons;
+        }
+
+        static void Part1(){
+            var moons = CreateMoons();
             long time = 0;
 
             while (time < 1000){
@@ -42,32 +47,15 @@ namespace Day_12
 
             // Part 1
             Console.WriteLine(energy);
+        }
 
-            // RESET (TODO METHOD)
-            moons = new List<Moon>();
-            i = 0;
+        static void Part2(){
+            var moons = CreateMoons();
 
-            foreach(var line in input){
-                var newLine = line.Substring(1, line.Length - 2);
-                var moonXYZ = newLine.Split(", ").Select(s => int.Parse(s.Substring(2))).ToList();
-                var moon = new Moon{
-                    Name = moonNames[i],
-                    X = moonXYZ[0],
-                    Y = moonXYZ[1],
-                    Z = moonXYZ[2]
-                };
+            var Xs = new HashSet<(int IOx, int IOxV, int CAx, int CAxV, int GAx, int GAxV, int EUx, int EUxV)>();
+            var Ys = new HashSet<(int IOy, int IOyV, int CAy, int CAyV, int GAy, int GAyV, int EUy, int EUyV)>();
+            var Zs = new HashSet<(int IOz, int IOzV, int CAz, int CAzV, int GAz, int GAzV, int EUz, int EUzV)>();
 
-                moons.Add(moon);
-                i++;
-            }
-
-            time = 0;
-
-
-
-            var Xs = new List<(int IOx, int IOxV, int CAx, int CAxV, int GAx, int GAxV, int EUx, int EUxV)>();
-            var Ys = new List<(int IOy, int IOyV, int CAy, int CAyV, int GAy, int GAyV, int EUy, int EUyV)>();
-            var Zs = new List<(int IOz, int IOzV, int CAz, int CAzV, int GAz, int GAzV, int EUz, int EUzV)>();
             var IO = moons.Single(m => m.Name.Equals("IO"));
             var CALLISTO = moons.Single(m => m.Name.Equals("CALLISTO"));
             var GANYMEDE = moons.Single(m => m.Name.Equals("GANYMEDE"));
@@ -77,35 +65,39 @@ namespace Day_12
             Ys.Add((IO.Y, IO.YVelocity, CALLISTO.Y, CALLISTO.YVelocity, GANYMEDE.Y, GANYMEDE.YVelocity, EUROPA.Y, EUROPA.YVelocity));
             Zs.Add((IO.Z, IO.ZVelocity, CALLISTO.Z, CALLISTO.ZVelocity, GANYMEDE.Z, GANYMEDE.ZVelocity, EUROPA.Z, EUROPA.ZVelocity));
 
-            while(time < 1000000){
+            while (true){
                 MoveMoons(moons);
-                IO = moons.Single(m => m.Name.Equals("IO"));
-                CALLISTO = moons.Single(m => m.Name.Equals("CALLISTO"));
-                GANYMEDE = moons.Single(m => m.Name.Equals("GANYMEDE"));
-                EUROPA = moons.Single(m => m.Name.Equals("EUROPA"));
+                var xRepeating = Xs.Add((IO.X, IO.XVelocity, CALLISTO.X, CALLISTO.XVelocity, GANYMEDE.X, GANYMEDE.XVelocity, EUROPA.X, EUROPA.XVelocity));
+                var yRepeating = Ys.Add((IO.Y, IO.YVelocity, CALLISTO.Y, CALLISTO.YVelocity, GANYMEDE.Y, GANYMEDE.YVelocity, EUROPA.Y, EUROPA.YVelocity));
+                var zRepeating = Zs.Add((IO.Z, IO.ZVelocity, CALLISTO.Z, CALLISTO.ZVelocity, GANYMEDE.Z, GANYMEDE.ZVelocity, EUROPA.Z, EUROPA.ZVelocity));
 
-                Xs.Add((IO.X, IO.XVelocity, CALLISTO.X, CALLISTO.XVelocity, GANYMEDE.X, GANYMEDE.XVelocity, EUROPA.X, EUROPA.XVelocity));
-                Ys.Add((IO.Y, IO.YVelocity, CALLISTO.Y, CALLISTO.YVelocity, GANYMEDE.Y, GANYMEDE.YVelocity, EUROPA.Y, EUROPA.YVelocity));
-                Zs.Add((IO.Z, IO.ZVelocity, CALLISTO.Z, CALLISTO.ZVelocity, GANYMEDE.Z, GANYMEDE.ZVelocity, EUROPA.Z, EUROPA.ZVelocity));
-
-                time++;
+                if (!xRepeating && !yRepeating && !zRepeating){
+                    break;
+                }
             }
 
+            // Work out the period. This assumes that it's the initial condition which is repeated, and there's
+            // no non-equilibrium interval at the start, where the moons "fall" into the equilibrium loop
+            
+            // 167624
+            var xPeriod = Xs.Count();
+            
+            // 231614
+            var yPeriod = Ys.Count();
 
-            int indexOfRepeat = 0;
+            // 116328
+            var zPeriod = Zs.Count();
 
-            var xPeriod = Xs.IndexOf(Xs[0], 1);
-            var yPeriod = Ys.IndexOf(Ys[0], 1);
-            var zPeriod = Zs.IndexOf(Zs[0], 1);
-
+            // The result (when all moons are in their initial state) is the Lowest Common Multiple of the periods
             long result = determineLCM(determineLCM(xPeriod, yPeriod), zPeriod);
-            // figure out index of the first repeat, and then the period of the X, Y, and Z's for each moon.
-            // the answer will be the LCM of the LCM's of the XYZ for each moon, plus that initial bit.
 
-
-
-            // 8950163991284645888 is too big lol
             Console.WriteLine(result);
+        }
+
+        static void Main (string[] args) {
+            Part1();
+
+            Part2();            
         }
 
         public static void MoveMoons(List<Moon> moons){
@@ -120,6 +112,7 @@ namespace Day_12
             }
         }
 
+        // shamelessly stolen from the internet.
         public static long determineLCM(long a, long b)
         {
             long num1, num2;
@@ -163,7 +156,5 @@ namespace Day_12
             var kinetic = Math.Abs(XVelocity) + Math.Abs(YVelocity) + Math.Abs(ZVelocity);
             return potential * kinetic;
         }
-
-        public (int x, int y, int z, int velx, int vely, int velz) Data => (X, Y, Z, XVelocity, YVelocity, ZVelocity);
     }
 }
