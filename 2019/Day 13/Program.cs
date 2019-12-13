@@ -60,10 +60,10 @@ namespace Day_13
                     input.Enqueue(1);
                 }
                 // Uncomment/comment for interest/speed
-                // Console.Clear();
-                // Draw(state);
-                // Thread.Sleep(50);
-                // Console.Clear();
+                Console.Clear();
+                Draw(state);
+                Thread.Sleep(50);
+                Console.Clear();
             }
 
             Console.WriteLine(state[(-1, 0)]);
@@ -74,9 +74,9 @@ namespace Day_13
             int maxX = map.Select(m => m.Key.x).Max();
             int maxY = map.Select(m => m.Key.y).Max();
 
-            for (int i = 0; i < maxY; i++)
+            for (int i = 0; i <= maxY; i++)
             {
-                for (int j = 0; j < maxX; j++)
+                for (int j = 0; j <= maxX; j++)
                 {
                     if (map.TryGetValue((j, i), out int tile)){
                         switch(tile){
