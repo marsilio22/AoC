@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -80,31 +80,71 @@ namespace Day_14 {
             var reactions = ProduceInput(input);
             var fuel = reactions.Single (r => r.Name.Equals ("FUEL"));
 
-// > 199999
             var fuelCount = 1;
-            var fuelIncrement = 99999;
-            var previousOreRequired = OreToProduce(fuel, reactions, fuelCount);
-            while(true){
-                spareChems = new Dictionary<string, int> ();
-                var newOreRequired = OreToProduce(fuel, reactions, fuelCount + fuelIncrement);
-                Console.WriteLine(newOreRequired);
-                if (newOreRequired > 1000000000000 && previousOreRequired < 1000000000000 ||
-                    newOreRequired < 1000000000000 && previousOreRequired > 1000000000000){
-                    Console.WriteLine(fuelCount);
-                    if (Math.Abs(fuelIncrement) > 3){
-                        Console.WriteLine("Reduce increment and multiply by -1");
-                        fuelIncrement /= 3;
-                        fuelIncrement *= -1;
-                    }
-                }
+            long oreForFuel = OreToProduce(fuel, reactions, 1);
+            int iterator = 10000;
+            //int minSpareChems = int.MaxValue;
 
-                if (Math.Abs(fuelIncrement) < 3333){
-                    Console.WriteLine($"{fuelCount} produced ore {newOreRequired}");
+            spareChems = new Dictionary<string, int>();
+            var orestest = new List<long>();
+            for (int i = 0; i < 1000000; i ++ ){
+                orestest.Add(OreToProduce(fuel, reactions, 1));
+                if (i % 10000 == 0 && i > 0){
+                    Console.WriteLine($"{i}, {orestest.Average()}, {orestest.GetRange(1, orestest.Count - 1).Average()}");
                 }
-
-                previousOreRequired = newOreRequired;
-                fuelCount+= fuelIncrement;
             }
+
+            spareChems = new Dictionary<string, int>();
+            while (oreForFuel < 1000000000000){
+                fuelCount += iterator;
+                oreForFuel += OreToProduce(fuel, reactions, iterator);
+                Console.WriteLine($"{fuelCount} fuel for {oreForFuel} ore");
+
+                if (1000000000000 - oreForFuel < iterator * iterator)
+                {
+                    iterator /= 2;
+                }
+
+                // if (spareChems.Values.All(v => v == 0)){
+                //     break;
+                // }
+                // var totalSpareChems = spareChems.Values.Sum();
+                // //Console.WriteLine($"{oreForFuel} ore for {fuelCount} fuel with {totalSpareChems} spare chemicals");
+                // // if (minSpareChems > totalSpareChems){
+                // //     minSpareChems = totalSpareChems;
+                // //     Console.WriteLine($"New minimum spare chemicals after {fuelCount}, of {minSpareChems}");
+                // // }
+                // if (totalSpareChems == 36) {
+                //     Console.WriteLine($"Hit 36 spare chems at fuel: {fuelCount} and ore: {oreForFuel}");
+                //     foreach(var chem in spareChems){
+                //         Console.WriteLine($"{chem.Key}, {chem.Value}");
+                //     }
+                // }
+            }
+
+            Console.WriteLine($"{fuelCount} fuel for {oreForFuel} ore");
+
+            // while(true){
+            //     spareChems = new Dictionary<string, int> ();
+            //     var newOreRequired = OreToProduce(fuel, reactions, fuelCount + fuelIncrement);
+            //     Console.WriteLine(newOreRequired);
+            //     if (newOreRequired > 1000000000000 && previousOreRequired < 1000000000000 ||
+            //         newOreRequired < 1000000000000 && previousOreRequired > 1000000000000){
+            //         Console.WriteLine(fuelCount);
+            //         if (Math.Abs(fuelIncrement) > 3){
+            //             Console.WriteLine("Reduce increment and multiply by -1");
+            //             fuelIncrement /= 3;
+            //             fuelIncrement *= -1;
+            //         }
+            //     }
+
+            //     if (Math.Abs(fuelIncrement) < 3333){
+            //         Console.WriteLine($"{fuelCount} produced ore {newOreRequired}");
+            //     }
+
+            //     previousOreRequired = newOreRequired;
+            //     fuelCount+= fuelIncrement;
+            // }
             return fuelCount;
         }
 
