@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -79,36 +79,16 @@ namespace Day_17
             var C = "L,8,R,6,R,6,R,10,L,8\n".ToCharArray();
             var continuousVideo = "n\n";
 
+            foreach(var character in A.Concat(B).Concat(C).Concat(continuousVideo)){
+                input.Enqueue((long)character);
+            }
+
             program[0] = 2;
             computer = new IntcodeComputer(program);
 
             computer.Calculate(new Queue<long>());
             computer.Calculate(input);
-
-            foreach(var character in A){
-                input.Enqueue((long)character);
-            }
-
-            computer.Calculate(input);
             
-            foreach(var character in B){
-                input.Enqueue((long)character);
-            }
-
-            computer.Calculate(input);
-            
-            foreach(var character in C){
-                input.Enqueue((long)character);
-            }
-
-            computer.Calculate(input);
-
-            foreach(var character in continuousVideo){
-                input.Enqueue((long)character);
-            }
-
-            computer.Calculate(input);
-
             while (computer.ReturnValues.Count != 1){
                 Console.Write((char)computer.ReturnValues.Dequeue());
             }
