@@ -84,6 +84,11 @@ namespace Day_20
 
 
 
+
+
+
+
+
             // TODO method
             coords = new HashSet<Coordinate>();
 
@@ -165,7 +170,7 @@ namespace Day_20
             }
         }
 
-        public static void distanceToNextWithLayers(Coordinate currentPosition, ICollection<Coordinate> map, int distance, Dictionary<string, Coordinate> portals, int layer){
+        public static void distanceToNextWithLayers(Coordinate currentPosition, ICollection<Coordinate> map, int distance, Dictionary<string, Coordinate> portals){
             var newShortestPath = currentPosition.DistanceFromEntrance > distance;
             currentPosition.DistanceFromEntrance = newShortestPath ? distance : currentPosition.DistanceFromEntrance;
             if (newShortestPath){
@@ -179,7 +184,9 @@ namespace Day_20
                 }
 
                 foreach(var adj in adjs){
-                    distanceToNext(adj, map, distance, portals);
+                    // use the layer on the coordinate to figure out what's going on here!!!
+                    ######
+                    distanceToNextWithLayers(adj, map, distance, portals);
                 }
             }
 
