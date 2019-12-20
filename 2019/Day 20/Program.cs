@@ -1,15 +1,24 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Threading;
 
 namespace Day_20
 {
     class Program
     {
+        public static int MazeSize;
+
         static void Main(string[] args)
         {
+            Thread T = new Thread(DoThing, 16000000);
+            T.Start();
+        }
+
+        public static void DoThing(){
             var input = File.ReadAllLines("./input.txt");
+            MazeSize = input[0].Length;
 
             HashSet<Coordinate> coords = new HashSet<Coordinate>();
 
@@ -76,8 +85,6 @@ namespace Day_20
                 coord.Adjacents.AddRange(adjs);
             }
 
-            Coordinate currentPosition = entrance;
-
             distanceToNext(entrance, coords, 0, portals);
 
             Console.WriteLine(exit.DistanceFromEntrance);
@@ -91,14 +98,15 @@ namespace Day_20
 
             // TODO method
             coords = new HashSet<Coordinate>();
+            var maxLayer = 10;
 
             x = 0;
             y = 0;
             foreach(var line in input){
                 foreach(var character in line){
                     if (character == '.'){
-                        for (int i = 0; i < 10; i ++)
-                            coords.Add(new Coordinate{X = x, Y = y, Layer = i});
+                        for (int i = 0; i < maxLayer; i ++)
+                            {coords.Add(new Coordinate{X = x, Y = y, Layer = i});}
                     }
                     x++;
                 }
@@ -113,43 +121,55 @@ namespace Day_20
                 for (x = 0; x < input[y].Length - 1; x ++){
                     if (!wallsandemptyspaces.Contains(input[y][x])){
                         string portalKey = null;
-                        Coordinate adjacentCoordinate = new Coordinate();
+                        List<Coordinate> adjacentCoordinates = new List<Coordinate>();
                         // Vertical
                         if (!wallsandemptyspaces.Contains(input[y+1][x]))
                         {
                             portalKey = input[y][x].ToString() + input[y+1][x];
-                            adjacentCoordinate = coords.First(c => c.X == x && c.Y == y+2 || c.X == x && c.Y == y-1);
+                            adjacentCoordinates = coords.Where(c => (c.X == x && c.Y == y+2 || c.X == x && c.Y == y-1)).ToList();
                         }
                         // Horizontal
                         else if (!wallsandemptyspaces.Contains(input[y][x+1])){
                             portalKey = input[y][x].ToString() + input[y][x+1];
-                            adjacentCoordinate = coords.First(c => c.X == x+2 && c.Y == y || c.X == x-1 && c.Y == y);
+                            adjacentCoordinates = coords.Where(c => (c.X == x+2 && c.Y == y || c.X == x-1 && c.Y == y)).ToList();
                         }
-                        else{
+                        else {
                             continue;
                         }
 
                         if (portalKey.Equals("AA")){
-                            entrance = adjacentCoordinate;
+                            entrance = adjacentCoordinates.Single(a => a.Layer == 0);
                             continue;
                         }
                         else if (portalKey.Equals("ZZ")){
-                            exit = adjacentCoordinate;
+                            exit = adjacentCoordinates.Single(a => a.Layer == 0);
+                            continue;
+                        }
+                        else if (portalKey.Equals("AA") || portalKey.Equals("ZZ")){
                             continue;
                         }
 
                         if (portals.ContainsKey(portalKey)){
-                            // adjacentCoordinate.Adjacents.Add(portals[portalKey].Adjacents[0]);
-                            portals[portalKey].Adjacents.Add(adjacentCoordinate);
+                            portals[portalKey].Adjacents.AddRange(adjacentCoordinates);
                         }
                         else
                         {
-                            portals.Add(portalKey, new Coordinate{Adjacents = new List<Coordinate>{adjacentCoordinate}});
+                            portals.Add(portalKey, new Coordinate{Adjacents = new List<Coordinate>(adjacentCoordinates)});
                         }
                     }
                 }
             }
 
+            foreach(var coord in coords){
+                var adjs = coords.Where(c => 
+                    coord.Layer == c.Layer ).Where(c => (c.X == coord.X && Math.Abs(c.Y - coord.Y) == 1 ||
+                    Math.Abs(c.X - coord.X) == 1 && c.Y == coord.Y));
+                coord.Adjacents.AddRange(adjs);
+            }
+
+            distanceToNextWithLayers(entrance, coords, 0, portals, maxLayer);
+
+            Console.WriteLine(exit.DistanceFromEntrance);
         }
 
         public static void distanceToNext(Coordinate currentPosition, ICollection<Coordinate> map, int distance, Dictionary<string, Coordinate> portals){
@@ -170,23 +190,34 @@ namespace Day_20
             }
         }
 
-        public static void distanceToNextWithLayers(Coordinate currentPosition, ICollection<Coordinate> map, int distance, Dictionary<string, Coordinate> portals){
+        public static void distanceToNextWithLayers(Coordinate currentPosition, ICollection<Coordinate> map, int distance, Dictionary<string, Coordinate> portals, int maxLayer){
             var newShortestPath = currentPosition.DistanceFromEntrance > distance;
             currentPosition.DistanceFromEntrance = newShortestPath ? distance : currentPosition.DistanceFromEntrance;
             if (newShortestPath){
                 distance++;
                 var adjs = currentPosition.Adjacents;
-                // need to figure out 
                 var adjPortals = portals.Values.Where(p => p.Adjacents.Contains(currentPosition)).ToList();
 
+                var layer = currentPosition.Layer;
                 if (adjPortals.Any()){
-                    adjs = adjs.Union(adjPortals[0].Adjacents.Where(p => p != currentPosition)).ToList();
+                    if (currentPosition.X == 2 || currentPosition.X == MazeSize - 2 || currentPosition.Y == 2 || currentPosition.Y == MazeSize - 2)
+                    {
+                        // external edge
+                        if (layer != 0){
+                            adjs = adjs.Union(adjPortals[0].Adjacents.Where(p => p.X != currentPosition.X  && p.Y != currentPosition.Y && p.Layer == layer - 1)).ToList();
+                        }
+                    }
+                    else
+                    {
+                        // internal edge 
+                        if (layer != maxLayer){
+                            adjs = adjs.Union(adjPortals[0].Adjacents.Where(p => p.X != currentPosition.X  && p.Y != currentPosition.Y && p.Layer == layer + 1 )).ToList();
+                        }
+                    }
                 }
-
+                // Console.WriteLine(distance);
                 foreach(var adj in adjs){
-                    // use the layer on the coordinate to figure out what's going on here!!!
-                    ######
-                    distanceToNextWithLayers(adj, map, distance, portals);
+                    distanceToNextWithLayers(adj, map, distance, portals, maxLayer);
                 }
             }
 
