@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -17,7 +17,7 @@ namespace Day_20
         }
 
         public static void DoThing(){
-            var input = File.ReadAllLines("./input.txt");
+            var input = File.ReadAllLines("./inputC.txt");
             MazeSize = input[0].Length;
 
             HashSet<Coordinate> coords = new HashSet<Coordinate>();
@@ -98,7 +98,7 @@ namespace Day_20
 
             // TODO method
             coords = new HashSet<Coordinate>();
-            var maxLayer = 10;
+            var maxLayer = 25;
 
             x = 0;
             y = 0;
@@ -168,7 +168,9 @@ namespace Day_20
             }
 
             distanceToNextWithLayers(entrance, coords, 0, portals, maxLayer);
-
+//646toolow
+// 1874 too low
+// 1875 too low
             Console.WriteLine(exit.DistanceFromEntrance);
         }
 
@@ -200,18 +202,18 @@ namespace Day_20
 
                 var layer = currentPosition.Layer;
                 if (adjPortals.Any()){
-                    if (currentPosition.X == 2 || currentPosition.X == MazeSize - 2 || currentPosition.Y == 2 || currentPosition.Y == MazeSize - 2)
+                    if (currentPosition.X == 2 || currentPosition.X == MazeSize - 3 || currentPosition.Y == 2 || currentPosition.Y == MazeSize - 3)
                     {
                         // external edge
                         if (layer != 0){
-                            adjs = adjs.Union(adjPortals[0].Adjacents.Where(p => p.X != currentPosition.X  && p.Y != currentPosition.Y && p.Layer == layer - 1)).ToList();
+                            adjs = adjs.Union(adjPortals[0].Adjacents.Where(p => !(p.X == currentPosition.X && p.Y == currentPosition.Y) && p.Layer == layer - 1)).ToList();
                         }
                     }
                     else
                     {
                         // internal edge 
                         if (layer != maxLayer){
-                            adjs = adjs.Union(adjPortals[0].Adjacents.Where(p => p.X != currentPosition.X  && p.Y != currentPosition.Y && p.Layer == layer + 1 )).ToList();
+                            adjs = adjs.Union(adjPortals[0].Adjacents.Where(p => !(p.X == currentPosition.X  && p.Y == currentPosition.Y) && p.Layer == layer + 1 )).ToList();
                         }
                     }
                 }
