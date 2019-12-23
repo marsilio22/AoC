@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Numerics;
 
 namespace Day_22
 {
@@ -12,13 +13,13 @@ namespace Day_22
             var input = File.ReadAllLines("./input.txt");
             var testInput = File.ReadAllLines("./inputA.txt");
 
-            long deckSize = 10;
-            long shuffles = 10;
+            BigInteger deckSize = 101;
+            BigInteger shuffles = 1;
             for(int j = 1; j <= shuffles; j ++)
             {
                 Console.WriteLine($"{j} shuffles");
                 Console.Write("Slow  :");
-                for(long i = 0; i < deckSize; i ++){
+                for(BigInteger i = 0; i < deckSize; i ++){
                     var test1 = SlowShuffle((int)i, deckSize, j, testInput);
                     Console.Write(test1 + ",");
                 }
@@ -37,16 +38,30 @@ namespace Day_22
                 Console.WriteLine();
             }
 
+            BigInteger cards = 119315717514047;
+            shuffles = 101741582076661;
 
-            var answer = FastShuffle(2020, 119315717514047, 101741582076661, input);
+            // test....
+            BigInteger x = 2020;
+            BigInteger y = FastShuffle(x, cards, shuffles, input);
+            BigInteger z = FastShuffle(y, cards, shuffles, input);
+
+            BigInteger a = (y - z) * BigInteger.ModPow(x - y + cards, cards - 2, cards) % cards;
+            BigInteger b = (y - a * x) % cards;
+
+            var result = (BigInteger.ModPow(a, shuffles, cards) * x + (BigInteger.ModPow(a, shuffles, cards) - 1) * BigInteger.ModPow(a - 1, cards - 2, cards) * b) % cards;
+
+            Console.WriteLine(result);
             //       2406044462912 is too low
             //      65304365993455 is too high
+            //      6821410630991
             // 9223372036854775808 long overflow
+            //Console.WriteLine(answer);
         }
 
-        public static long SlowShuffle(int position, long cards, long shuffles, ICollection<string> input){
+        public static BigInteger SlowShuffle(int position, BigInteger cards, BigInteger shuffles, ICollection<string> input){
             ICollection<int> deck = Enumerable.Range(0, (int)cards).ToList();
-            for (long i = 0; i < shuffles; i ++)
+            for (BigInteger i = 0; i < shuffles; i ++)
             {
                 foreach(var line in input){
                     if (line.Contains("stack")){
@@ -68,9 +83,9 @@ namespace Day_22
             return deck.ToList()[position];
         }
 
-        public static (long x, long y, long gcd) euclid(long a, long b)
+        public static (BigInteger x, BigInteger y, BigInteger gcd) euclid(BigInteger a, BigInteger b)
         {
-            long x0 = 1, xn = 1, y0 = 0, yn = 0, x1 = 0, y1 = 1, f, r = a % b;
+            BigInteger x0 = 1, xn = 1, y0 = 0, yn = 0, x1 = 0, y1 = 1, f, r = a % b;
  
             while (r > 0)
             {
@@ -90,49 +105,60 @@ namespace Day_22
             return (xn, yn, b);
         }
 
-        public static long FastShuffle(int position, long cards, long shuffles, ICollection<string> input){
-            var values = new HashSet<long>();
-            List<long> indexableValues = new List<long>();
+        public static BigInteger FastShuffle(BigInteger position, BigInteger cards, BigInteger shuffles, ICollection<string> input){
+            var values = new HashSet<BigInteger>();
+            List<BigInteger> indexableValues = new List<BigInteger>();
+                        input = input.Reverse().ToList();
 
-            long answer = position;
-            while(true){
-                foreach(var line in input){
-                    if (line.Contains("stack")){
-                        answer = (cards - 1 - answer) % cards;
-                    // Console.WriteLine($"{cards}, {answer}");
-                    }
-                    else if (line.Contains("cut")){
-                        var N = long.Parse(line.Split(' ').Last());
-                        answer = (answer + N) % cards;
-                    }
-                    else if (line.Contains("increment")){
-                        var N = long.Parse(line.Split(' ').Last());
-                        var euclidAns = euclid(N, cards);
-                        answer = (answer * euclidAns.x) % cards;
+            BigInteger answer = position;
+            values.Add(answer);
+            indexableValues.Add(answer);
+           // while(true){
+            foreach(var line in input){
+                if (line.Contains("stack")){
+                    answer = (cards - 1 - answer) % cards;
+                // Console.WriteLine($"{cards}, {answer}");
+                }
+                else if (line.Contains("cut")){
+                    var N = BigInteger.Parse(line.Split(' ').Last());
+                    answer = (answer + N) % cards;
+                }
+                else if (line.Contains("increment")){
+                    var N = BigInteger.Parse(line.Split(' ').Last());
+                    var euclidAns = euclid(N, cards);
+                    answer = (answer * euclidAns.x) % cards;
 
-                    }
-                    if (answer < 0){
-                        answer += cards;
-                    }
                 }
-                if (Math.Abs(values.Count() - 630717) < 10){
-                    Console.WriteLine($"shuffle: {values.Count()} = {answer}");
+                if (answer < 0){
+                    answer += cards;
                 }
-
-                if (!values.Add(answer)){
-                    break;
-                }
-                indexableValues.Add(answer);
             }
+
+                //indexableValues.Add(answer);
+                // if (!values.Add(answer)){
+                //     break;
+                // }
+            //}
 
             // Now we have done some shuffles and reached a cyclical value
             // Need to figure out which element of the cycle we care about.
 
-            var cycleLength = values.Count();
-            
-            var indexOfLastThing = (long)((((double)shuffles/(double)cycleLength) % 1) * cycleLength);
+            //answer = BigInteger.ModPow(answer % cards, shuffles, cards);
 
-            answer = indexableValues[(int)indexOfLastThing];
+
+
+
+            // var cycleLength = indexableValues.IndexOf(answer, indexableValues.IndexOf(answer) + 1) - indexableValues.IndexOf(answer);
+            
+            // var isLeadInTime = indexableValues.IndexOf(answer) != 0;
+            // var itemsInCycle = shuffles - indexableValues.IndexOf(answer);
+            // var cyclesToCompletion = (double)itemsInCycle / (double)cycleLength;
+            // var finalCycleProportion = cyclesToCompletion % 1;
+            // var finalCycleLastIndex = (int)(finalCycleProportion * cycleLength);
+            
+            // var indexOfLastThing = (int)((((double)(shuffles-indexableValues.IndexOf(answer))/(double)cycleLength) % 1) * cycleLength);
+
+            //answer = indexableValues[indexableValues.IndexOf(answer) + finalCycleLastIndex];
 
             return answer;
         }
@@ -163,8 +189,8 @@ namespace Day_22
         } 
 
 
-        public static long HowManyCardsHaveBeenDealtBeforeThisOne(long n, long length, int k){
-            long value = 0;
+        public static BigInteger HowManyCardsHaveBeenDealtBeforeThisOne(BigInteger n, BigInteger length, int k){
+            BigInteger value = 0;
             
             for(int j = 0; j < k; j++)
             {
@@ -175,7 +201,7 @@ namespace Day_22
             
         }
 
-        public static long CardsDealtInRound(long n, long length, int k){
+        public static BigInteger CardsDealtInRound(BigInteger n, BigInteger length, int k){
             return 1 + (length - k - 1)/n;
         }
         
