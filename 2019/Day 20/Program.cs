@@ -17,7 +17,7 @@ namespace Day_20
         }
 
         public static void DoThing(){
-            var input = File.ReadAllLines("./inputC.txt");
+            var input = File.ReadAllLines("./input.txt");
             MazeSize = input[0].Length;
 
             HashSet<Coordinate> coords = new HashSet<Coordinate>();
