@@ -40,77 +40,53 @@ namespace Day_4
         public Passport(ICollection<string> input){
             foreach(var property in input){
                 var split = property.Split(':');
-
-
-                //var prop = this.GetType().GetProperties().Single(p => p.Name.Equals(split[0])).GetSetMethod().Invoke(this, new [] {split[1]});
-                // todo reflection.
-                switch(split[0]){
-                    case "byr":
-                        this.byr = split[1];
-                        break;
-                    case "iyr":
-                        this.iyr = split[1];
-                        break;
-                    case "eyr":
-                        this.eyr = split[1];
-                        break;
-                    case "hgt":
-                        this.hgt = split[1];
-                        break;
-                    case "hcl":
-                        this.hcl = split[1];
-                        break;
-                    case "ecl":
-                        this.ecl = split[1];
-                        break;
-                    case "pid":
-                        this.pid = split[1];
-                        break;
-                    case "cid":
-                        this.cid = split[1];
-                        break;
-                    default:
-                        throw new Exception("Something unknown happened");
-                }
+                var prop = this.GetType()
+                               .GetProperties()
+                               .Single(p => p.Name.Equals(split[0]))
+                               .GetSetMethod()
+                               .Invoke(this, new [] {split[1]});
             }
         }
+        private static readonly ICollection<string> eyeColours = new []{"amb","blu", "brn", "gry", "grn", "hzl", "oth"};
     
-        public string byr {get; set;}
-        public string iyr {get; set;}
-        public string eyr {get; set;}
-        public string hgt {get; set;}
-        public string hcl {get; set;}
-        public string ecl {get; set;}
-        public string pid {get; set;}
-        public string cid {get; set;}
+        private string byr {get; set;}
+        private string iyr {get; set;}
+        private string eyr {get; set;}
+        private string hgt {get; set;}
+        private string hcl {get; set;}
+        private string ecl {get; set;}
+        private string pid {get; set;}
+        private string cid {get; set;}
+
+        public int BirthYear { get { int.TryParse(this.byr, out int byrVal); return byrVal; } }
+        public int IssueYear { get { int.TryParse(this.iyr, out int iyrVal); return iyrVal; } }
+        public int ExpiryYear { get { int.TryParse(this.eyr, out int eyrVal); return eyrVal; }}
+
+        public (int value, string units) Height { get {int.TryParse(hgt.Substring(0, hgt.Length - 2), out int hgtVal); if (hgtVal != 0) return (hgtVal, hgt.Substring(hgt.Length - 2)); else return (0, null); }}
+        public string HairColour { get { return hcl; } }
+        public string EyeColour { get { return ecl; } }
+        public string PassportId { get { return pid; } }
+        public string CountryId { get { return cid; } }
 
         public bool IsValid(){
             if (byr == null || iyr == null || eyr == null || hgt == null || hcl == null || ecl == null || pid == null){
                 return false;
             }
-
-            int.TryParse(this.byr, out int byrVal);
-            var byrValid = byrVal <= 2002 && byrVal >= 1920;
-
-            int.TryParse(this.iyr, out int iyrVal);
-            var iyrValid = iyrVal <= 2020 && iyrVal >= 2010;
-
-            int.TryParse(this.eyr, out int eyrVal);
-            var eyrValid = eyrVal <= 2030 && eyrVal >= 2020;
+            var byrValid = BirthYear <= 2002 && BirthYear >= 1920;
+            var iyrValid = IssueYear<= 2020 && IssueYear >= 2010;
+            var eyrValid = ExpiryYear <= 2030 && ExpiryYear >= 2020;
 
             bool hgtValid = false;
-            int.TryParse(hgt.Substring(0, hgt.Length - 2), out int hgtVal);
             if (hgt.EndsWith("cm")){
-                hgtValid = hgtVal >=150 && hgtVal <= 193;
+                hgtValid = Height.value >=150 && Height.value <= 193;
             }
             else if (hgt.EndsWith("in")){
-                hgtValid = hgtVal >= 59 && hgtVal <= 76;
+                hgtValid = Height.value >= 59 && Height.value <= 76;
             }
 
             var regex = new Regex("^#[0-9a-f]{6}$");
             var hclValid = regex.Match(hcl).Success;
 
-            var eyeColours = new []{"amb","blu", "brn", "gry", "grn", "hzl", "oth"};
             var eclValid = eyeColours.Contains(ecl);
 
             regex = new Regex("^[0-9]{9}$");
