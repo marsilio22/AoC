@@ -29,10 +29,22 @@ namespace Day_7
             // Part 2
 
             var currentProg = ans;
-            while(true){
-                var weights = currentProg.Select(p => p.)
-                if()
-            }
+
+            // erm, I did this by hand...
+
+            
+            // while(true){
+            //     var weights = currentProg.Progs.Select(p => p.SubWeight).OrderBy(c => c).ToList();
+
+            //     if(weights.Max() == weights.Min())
+            //     {
+            //         throw new Exception("can this happen?");
+            //     }
+            //     else 
+            //     {
+
+            //     }
+            // }
         }
     }
 
@@ -46,8 +58,9 @@ namespace Day_7
 
         public List<Prog> Progs {get;set;} = new List<Prog>();
 
-        public int SubWeight => Progs.Any() ? Progs.Sum(p => p.SubWeight) : Weight;
+        public int SubWeight => Progs.Any() ? Progs.Sum(p => p.SubWeight) + Weight : Weight;
 
+        public ICollection<int> SubWeights => Progs.Select(p => p.SubWeight).ToList();
         public Prog(string line){
             var splitOnSupports = line.Split("->");
             if (splitOnSupports.Length > 1){
