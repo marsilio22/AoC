@@ -11,7 +11,8 @@ namespace Day_17
         {
             var lines = File.ReadLines("./input.txt").ToList();
 
-            // part1 is just part2 but with w = 0 always
+            // part1 is just part2 but with w = 0
+            // this bool will indicate whether w is fixed at 0
             var parts = new [] {true, false};
 
             // TODO I think this would be easier to parse if we could just call it with 
