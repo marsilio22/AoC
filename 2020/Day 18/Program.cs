@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -27,7 +27,7 @@ namespace Day_18
                 ans += DoMathsPart2(line, false);
             }
 
-            Console.WriteLine("Part 2:" + ans);
+            Console.WriteLine("Part 2: " + ans);
         }
 
         public static long DoMathsPart1(string maths, ref int i)
