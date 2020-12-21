@@ -41,8 +41,8 @@ namespace Day_20
             foreach(var tile in tiles)
             {
                 var topEdge = string.Join(null, tile.Value.Where(v => v.Key.y == 0).Select(c => c.Value).ToList());
-                var bottomEdge = string.Join(null, tile.Value.Where(v => v.Key.y == 9).Reverse.Select(c => c.Value).ToList());
-                var leftEdge = string.Join(null, tile.Value.Where(v => v.Key.x == 0).Reverse.Select(c => c.Value).ToList());
+                var bottomEdge = string.Join(null, tile.Value.Where(v => v.Key.y == 9).Reverse().Select(c => c.Value).ToList());
+                var leftEdge = string.Join(null, tile.Value.Where(v => v.Key.x == 0).Reverse().Select(c => c.Value).ToList());
                 var rightEdge = string.Join(null, tile.Value.Where(v => v.Key.x == 9).Select(c => c.Value).ToList());
 
                 edges.Add(tile.Key, new Dictionary<string, string>{
@@ -66,7 +66,7 @@ namespace Day_20
             
             var edgesCopy = edges.ToDictionary(c => c.Key, c => c.Value);
 
-            var adjacents = new Dictionary<int, ICollection<(int, string, D4)>>();
+            var adjacents = new Dictionary<int, ICollection<(int tileId, string direction, D4 op)>>();
 
 
             foreach(var tile in edges)
@@ -130,40 +130,53 @@ namespace Day_20
                         }
 
                         // now combine (POST MULTIPLY AS D4 IS NOT COMMUTATIVE) with the required operation for the other tile
+                        
+                        //----------------------------------------
+                        // BECAUSE THE TOP EDGE OF ONE IS MATCHED TO THE BOTTOM OF THE OTHER
+                        // THEY ARE READ (CLOCKWISE) AS REFLECTIONS OF EACH OTHER ANYWAY (CLOCKWISE), SO IF THEY MATCH UP 
+                        // ALREADY, THEN WE NEED TO REFLECT
+                        //----------------------------------------
                         switch(otherTileEdge.Key)
                         {
                             case "left":
                                 // rotate 270 anticlockwise
-                                requiredOperation *= new D4(D4_element.RRR);
+                                // requiredOperation *= new D4(D4_element.RRR);
+                                requiredOperation *= new D4(D4_element.RRRF);
                                 break;
                             case "right":
                                 // rotate 90 anticlockwise
-                                requiredOperation *= new D4(D4_element.R);
+                                // requiredOperation *= new D4(D4_element.R);
+                                requiredOperation *= new D4(D4_element.RF);
                                 break;
                             case "top":
                                 // do nothing, bottom -> top is correct already
+                                // requiredOperation *= new D4(D4_element.E);
+                                requiredOperation *= new D4(D4_element.RF);
                                 break;
                             case "bottom":
                                 // rotate 180 anticlockwise
-                                requiredOperation *= new D4(D4_element.RR);
+                                // requiredOperation *= new D4(D4_element.RR);
+                                requiredOperation *= new D4(D4_element.RRF);
                                 break;
-                            
-                            // REFLECTIONS CHANGE THE DIRECION OF TURNING, SO ROTATE FIRST
                             case "left$":
                                 // Rotate 270 anticlockwise and reflect
-                                requiredOperation *= new D4(D4_element.RRRF);
+                                // requiredOperation *= new D4(D4_element.RRRF);
+                                requiredOperation *= new D4(D4_element.RRR);
                                 break;
                             case "right$":
                                 // Rotate 90 anticlockwise and reflect
-                                requiredOperation *= new D4(D4_element.RF);
+                                // requiredOperation *= new D4(D4_element.RF);
+                                requiredOperation *= new D4(D4_element.R);
                                 break;
                             case "top$":
                                 // just reflect
-                                requiredOperation *= new D4(D4_element.F);
+                                // requiredOperation *= new D4(D4_element.F);
+                                requiredOperation *= new D4(D4_element.E);
                                 break;
                             case "bottom$":
                                 // Rotate 180 anticlockwise and reflect
-                                requiredOperation *= new D4(D4_element.RRF);
+                                // requiredOperation *= new D4(D4_element.RRF);
+                                requiredOperation *= new D4(D4_element.RR);
                                 break;
                         }
 
@@ -179,15 +192,14 @@ namespace Day_20
             // Part 1
             Console.WriteLine((long)corners[0] * (long)corners[1] * (long)corners[2] * (long)corners[3]);
 
-            // need to keep track of whether or not the tile we're looking at right now has been reflected or not
-
+            // need to keep track of whether or not the tile we're looking at right now has been reflected or not?
             var tileMap = new Dictionary<int, ((int x, int y) coord, D4 operationForOrientation, char reflectionAxis)>();
             
             // pick a random tile in the middle. 
             // This tile will determine the orientation by which we assemble the tiles.
             var currentTile = adjacents.First(c => c.Value.Count == 4); 
 
-            tileMap.Add(currentTile.Key, ((0, 0), new D4(D4_element.E), 'x'));
+            tileMap.Add(currentTile.Key, ((0, 0), new D4(D4_element.E), 'a'));
 
             var tilesToDo = new Queue<KeyValuePair<int, ICollection<(int tileId, string facing, D4 operation)>>>();
             tilesToDo.Enqueue(currentTile);
@@ -203,43 +215,139 @@ namespace Day_20
                 var feVar = tile.Value.Where(v => !tileMap.ContainsKey(v.tileId));
                 foreach (var t in feVar)
                 {
-                    // something is wrong here.
-                    var newFacing = WorkOutFacing(t.facing, tileDetails.operationForOrientation);
+                    // TODO need to keep track of whether the tile this tile is adj to has been reflected or not. probably one of the operations...
+                    // var currentFacing = t.facing;
+
+                    // if (tileDetails.reflectionAxis == 'x' && t.facing.Equals("top"))
+                    // {
+                    //     currentFacing = "bottom";
+                    // }
+                    // else if (tileDetails.reflectionAxis == 'x' && t.facing.Equals("bottom"))
+                    // {
+                    //     currentFacing = "top";
+                    // }
+                    // else if (tileDetails.reflectionAxis == 'y' && t.facing.Equals("left"))
+                    // {
+                    //     currentFacing = "right";
+                    // }
+                    // else if (tileDetails.reflectionAxis == 'y' && t.facing.Equals("right"))
+                    // {
+                    //     currentFacing = "left";
+                    // }
+
+                    var reflections = new List<D4_element>{D4_element.F, D4_element.RF, D4_element.RRF, D4_element.RRRF};
+
+                    var newFacing = WorkOutFacing(t.facing, t.operation);
                     (int x, int y) nextCoord = (0, 0);
                     char reflectionAxis;
 
                     switch(newFacing){
                         case "top":
                             nextCoord = (tileDetails.coord.x, tileDetails.coord.y - 1);
-                            reflectionAxis = 'y';
+                            if (reflections.Contains(t.operation.Value))
+                            {
+                                reflectionAxis = 'y';
+                            }
+                            else
+                            {
+                                reflectionAxis = 'a';
+                            }
                             break;
                         case "left":
                             nextCoord = (tileDetails.coord.x - 1, tileDetails.coord.y);
-                            reflectionAxis = 'x';
+                            if (reflections.Contains(t.operation.Value))
+                            {
+                                reflectionAxis = 'x';
+                            }
+                            else
+                            {
+                                reflectionAxis = 'a';
+                            }
                             break;
                         case "right":
                             nextCoord = (tileDetails.coord.x + 1, tileDetails.coord.y);
-                            reflectionAxis = 'x';
+                            if (reflections.Contains(t.operation.Value))
+                            {
+                                reflectionAxis = 'x';
+                            }
+                            else
+                            {
+                                reflectionAxis = 'a';
+                            }
                             break;
                         case "bottom":
                             nextCoord = (tileDetails.coord.x, tileDetails.coord.y + 1);
-                            reflectionAxis = 'y';
+                            if (reflections.Contains(t.operation.Value))
+                            {
+                                reflectionAxis = 'y';
+                            }
+                            else
+                            {
+                                reflectionAxis = 'a';
+                            }
                             break;
                         default:
                             throw new Exception("Shouldn't happen");
                     }
 
+                    // if (tileMap.Any(t => t.Value.coord == nextCoord))
+                    // {
+                    //     Console.WriteLine();
+                    // }
+
+
                     tileMap.Add(t.tileId, (nextCoord, tileDetails.operationForOrientation * t.operation, reflectionAxis));
-                    tilesToDo.Enqueue(adjacents.First(f => f.Key == t.tileId));
+                    var tileToDoToAdd = adjacents.First(f => f.Key == t.tileId);
+
+                    if (reflectionAxis == 'x')
+                    {
+                        (int tileId, string direction, D4 op) memSwap = (-1, "", new D4(D4_element.E));
+                        // swap T and B
+                        if (tileToDoToAdd.Value.Any(v => v.direction.Equals("top")))
+                        {
+                            memSwap = tileToDoToAdd.Value.Single(v => v.direction.Equals("top"));
+                            tileToDoToAdd.Value.Remove(memSwap);
+                        }
+
+                        if (tileToDoToAdd.Value.Any(v => v.direction.Equals("bottom")))
+                        {
+                            var valToTop = tileToDoToAdd.Value.Single(v => v.direction.Equals("bottom"));
+                            tileToDoToAdd.Value.Add((valToTop.tileId, "top", valToTop.op));
+                            tileToDoToAdd.Value.Remove(valToTop);
+                        }
+
+                        if (memSwap.tileId != -1){
+                            tileToDoToAdd.Value.Add((memSwap.tileId, "bottom", memSwap.op));
+                        }
+                    }
+                    if (reflectionAxis == 'y')
+                    {
+                        // swap L and R
+                        (int tileId, string direction, D4 op) memSwap = (-1, "", new D4(D4_element.E));
+                        if (tileToDoToAdd.Value.Any(v => v.direction.Equals("left")))
+                        {
+                            memSwap = tileToDoToAdd.Value.Single(v => v.direction.Equals("left"));
+                            tileToDoToAdd.Value.Remove(memSwap);
+                        }
+
+                        if (tileToDoToAdd.Value.Any(v => v.direction.Equals("right")))
+                        {
+                            var valToTop = tileToDoToAdd.Value.Single(v => v.direction.Equals("right"));
+                            tileToDoToAdd.Value.Add((valToTop.tileId, "left", valToTop.op));
+                            tileToDoToAdd.Value.Remove(valToTop);
+                        }
+
+                        if (memSwap.tileId != -1){
+                            tileToDoToAdd.Value.Add((memSwap.tileId, "right", memSwap.op));
+                        }
+                    }
+
+                    tilesToDo.Enqueue(tileToDoToAdd);
                 }
             }
 
             // now we have the map tiles in place, we need to perform the operations on them, and 
             // stitch them into the big map.
-
-            // var col = 0;
-            // var row = 0;
-
             var x = 0;
             var y = 0;
 
@@ -273,6 +381,12 @@ namespace Day_20
             }
 
             Console.WriteLine();
+
+            var emptyDict = new Dictionary<(int, int), char>();
+            for (int i = 0; i < 10; i++){
+                for (int j = 0; j < 10; j++)
+                    emptyDict[(i, j)] = '.';
+            }
 
             for (int i = iMin; i <= iMax; i++)
             {
@@ -375,24 +489,44 @@ namespace Day_20
             return newDict;
         }
 
-        public static string WorkOutFacing(string currentFacing, D4 operation)
+        public static string WorkOutFacing(string currentFacing, D4 operation/*, char reflectionAxis*/)
         {
             var facings = new List<string>{"top", "left", "bottom", "right"};
-
+            // Func<bool> facingFlip = () => reflectionAxis == 'x' && currentFacing.Equals("top")|| currentFacing.Equals("bottom")
+            //                            || reflectionAxis == 'y' && currentFacing.Equals("left")|| currentFacing.Equals("right");
             switch(operation.Value)
             {
                 case D4_element.E:
                 case D4_element.F:
                     return currentFacing;
+                    // if (facingFlip()){
+                    //     return facings[(facings.IndexOf(currentFacing) + 2) % 4];
+                    // }
+                    // return currentFacing;
                 case D4_element.R:
                 case D4_element.RF:
                     return facings[(facings.IndexOf(currentFacing) + 1) % 4];
+                    //currentFacing = facings[(facings.IndexOf(currentFacing) + 1) % 4];
+                    // if (facingFlip()){
+                    //     return facings[(facings.IndexOf(currentFacing) + 2) % 4];
+                    // }
+                    // return currentFacing;
                 case D4_element.RR:
                 case D4_element.RRF:
                     return facings[(facings.IndexOf(currentFacing) + 2) % 4];
+                    //currentFacing = facings[(facings.IndexOf(currentFacing) + 2) % 4];
+                    // if (facingFlip()){
+                    //     return facings[(facings.IndexOf(currentFacing) + 2) % 4];
+                    // }
+                    // return currentFacing;
                 case D4_element.RRR:
                 case D4_element.RRRF:
                     return facings[(facings.IndexOf(currentFacing) + 3) % 4];
+                    //currentFacing = facings[(facings.IndexOf(currentFacing) + 3) % 4];
+                    // if (facingFlip()){
+                    //     return facings[(facings.IndexOf(currentFacing) + 2) % 4];
+                    // }
+                    // return currentFacing;
                 default:
                     throw new Exception("shouldn't happen");
             }
