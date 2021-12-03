@@ -27,54 +27,47 @@ var epsilonDec = Convert.ToInt32(epsilon, 2);
 
 Console.WriteLine(gammaDec * epsilonDec);
 
-
 var oxy = string.Empty;
 var co2 = string.Empty;
 
-var parsedCopy = parsed.ToList();
+var oxyCopy = parsed.ToList();
+var co2Copy = parsed.ToList();
 
 for (int i=0; i < binLength; i++)
 {
-    if (parsedCopy.Sum(p => p[i]) < (double)parsedCopy.Count / 2)
+    if (oxyCopy.Sum(p => p[i]) < (double)oxyCopy.Count / 2)
     {
-        parsedCopy = parsedCopy.Where(p => p[i] == 0).ToList();
+        oxyCopy = oxyCopy.Where(p => p[i] == 0).ToList();
     }
     else 
     {
-        parsedCopy = parsedCopy.Where(p => p[i] == 1).ToList();
+        oxyCopy = oxyCopy.Where(p => p[i] == 1).ToList();
     }
 
-    if (parsedCopy.Count() == 1)
+    if (oxyCopy.Count() == 1 && string.IsNullOrEmpty(oxy))
     {
-        foreach(var digit in parsedCopy.Single())
+        foreach(var digit in oxyCopy.Single())
         {
             oxy += digit;
         }
-        i = binLength;
     }
-}
-
-// co2 TODO conglomerate the two.
-parsedCopy = parsed.ToList();
-
-for (int i=0; i < binLength; i++)
-{
-    if (parsedCopy.Sum(p => p[i]) < (double)parsedCopy.Count / 2)
+    
+    // todo method this, or something
+    if (co2Copy.Sum(p => p[i]) < (double)co2Copy.Count / 2)
     {
-        parsedCopy = parsedCopy.Where(p => p[i] == 1).ToList();
+        co2Copy = co2Copy.Where(p => p[i] == 1).ToList();
     }
     else 
     {
-        parsedCopy = parsedCopy.Where(p => p[i] == 0).ToList();
+        co2Copy = co2Copy.Where(p => p[i] == 0).ToList();
     }
 
-    if (parsedCopy.Count() == 1)
+    if (co2Copy.Count() == 1 && string.IsNullOrEmpty(co2))
     {
-        foreach(var digit in parsedCopy.Single())
+        foreach(var digit in co2Copy.Single())
         {
             co2 += digit;
         }
-        i = binLength;
     }
 }
 
