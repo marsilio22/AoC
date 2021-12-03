@@ -1,6 +1,4 @@
-﻿
-
-var lines = File.ReadAllLines("./input.txt");
+﻿var lines = File.ReadAllLines("./input.txt");
 
 ICollection<(string dir, int value)> parsed = lines.Select(l => l.Split(" ")).Select(l => (l[0], int.Parse(l[1]))).ToList();
 
@@ -35,7 +33,6 @@ foreach(var line in parsed)
             break;
         default:
             throw new Exception();
-            break;
     }
 }
 
