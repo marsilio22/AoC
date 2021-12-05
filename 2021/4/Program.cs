@@ -32,6 +32,7 @@ foreach(var num in numbers)
     boards = boards.Where(b => !b.HasWon()).ToList();
 }
 
+Console.WriteLine(boards.Count());
 Console.WriteLine(answers.First());
 Console.WriteLine(answers.Last());
 
