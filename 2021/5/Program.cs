@@ -1,84 +1,54 @@
-﻿using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;
-using System.Text;
+﻿using System.Text;
 
 var lines = File.ReadAllLines("./input.txt");
 
-
 ICollection<((int x, int y) start, (int x, int y) finish)> coordinatePairs = lines.Select(l => Parse(l.Split(" -> "))).ToList();
-
-//part1
-var p1CoordinatePairs = coordinatePairs.Where(cp => cp.start.x == cp.finish.x || cp.start.y == cp.finish.y).ToList();
 
 var map = new Dictionary<(int x, int y), int>(); // count how many plumes in each cell as we go
 
-foreach(var pair in p1CoordinatePairs)
-{
-    // assume diagonals are always gradient 1 or -1
-    var distance = Math.Max(Math.Abs(pair.finish.x - pair.start.x), Math.Abs(pair.finish.y - pair.start.y));
-    (int x, int y) direction = ((pair.finish.x - pair.start.x) / distance, (pair.finish.y - pair.start.y) / distance);
-
-    for (int j = 0; j <= distance; j++)
-    {
-        (int x, int y) coord;
-        if (pair.start.x == pair.finish.x)
-        {
-            coord = (pair.start.x, pair.start.y + j*direction.y);
-        }
-        else if (pair.start.y == pair.finish.y)
-        {
-            coord = (pair.start.x + j*direction.x, pair.start.y);
-        }
-        else 
-        {
-            coord = (pair.start.x + j*direction.x, pair.start.y + j*direction.y);
-        }
-
-        map.TryGetValue(coord, out var value);
-        map[coord] = value + 1; // default will be 0, so that's cool.
-    }
-}
-
+//part1
+var p1CoordinatePairs = coordinatePairs.Where(cp => cp.start.x == cp.finish.x || cp.start.y == cp.finish.y).ToList();
+AddLinesToMap(p1CoordinatePairs, map);
 var ans = map.Count(m => m.Value > 1);
 Draw(map, "part1.txt");
-
 Console.WriteLine(ans);
-
 
 //part2
-var p2CoordinatePairs = coordinatePairs.Where(cp => !p1CoordinatePairs.Contains(cp));
-
-foreach(var pair in p2CoordinatePairs)
-{
-    // assume diagonals are always gradient 1 or -1
-    var distance = Math.Max(Math.Abs(pair.finish.x - pair.start.x), Math.Abs(pair.finish.y - pair.start.y));
-    (int x, int y) direction = ((pair.finish.x - pair.start.x) / distance, (pair.finish.y - pair.start.y) / distance);
-
-    for (int j = 0; j <= distance; j++)
-    {
-        (int x, int y) coord;
-        if (pair.start.x == pair.finish.x)
-        {
-            coord = (pair.start.x, pair.start.y + j*direction.y);
-        }
-        else if (pair.start.y == pair.finish.y)
-        {
-            coord = (pair.start.x + j*direction.x, pair.start.y);
-        }
-        else 
-        {
-            coord = (pair.start.x + j*direction.x, pair.start.y + j*direction.y);
-        }
-
-        map.TryGetValue(coord, out var value);
-        map[coord] = value + 1; // default will be 0, so that's cool.
-    }
-}
-
+var p2CoordinatePairs = coordinatePairs.Where(cp => !p1CoordinatePairs.Contains(cp)).ToList();
+AddLinesToMap(p2CoordinatePairs, map);
 ans = map.Count(m => m.Value > 1);
 Draw(map, "part2.txt");
-
 Console.WriteLine(ans);
+
+static void AddLinesToMap(ICollection<((int x, int y) start, (int x, int y) finish)> lines, IDictionary<(int x, int y), int> map)
+{
+    foreach(var pair in lines)
+    {
+        // assume diagonals are always gradient 1 or -1
+        var distance = Math.Max(Math.Abs(pair.finish.x - pair.start.x), Math.Abs(pair.finish.y - pair.start.y));
+        (int x, int y) direction = ((pair.finish.x - pair.start.x) / distance, (pair.finish.y - pair.start.y) / distance);
+
+        for (int j = 0; j <= distance; j++)
+        {
+            (int x, int y) coord;
+            if (pair.start.x == pair.finish.x)
+            {
+                coord = (pair.start.x, pair.start.y + j*direction.y);
+            }
+            else if (pair.start.y == pair.finish.y)
+            {
+                coord = (pair.start.x + j*direction.x, pair.start.y);
+            }
+            else 
+            {
+                coord = (pair.start.x + j*direction.x, pair.start.y + j*direction.y);
+            }
+
+            map.TryGetValue(coord, out var value);
+            map[coord] = value + 1; // default will be 0, so that's cool.
+        }
+    }
+}
 
 static ((int x1, int y1), (int x2, int y2)) Parse(string[] strings)
 {
