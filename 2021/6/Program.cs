@@ -18,21 +18,29 @@ foreach(var num in line)
     parsed[num] = parsed[num] + 1;
 }
 
-for (int i = 0; i < 256; i++)
-{
-    var copy = parsed.ToDictionary(p => p.Key, p => p.Value);
-
-    // this will do lol
-    parsed[0] = copy[1];
-    parsed[1] = copy[2];
-    parsed[2] = copy[3];
-    parsed[3] = copy[4];
-    parsed[4] = copy[5];
-    parsed[5] = copy[6];
-    parsed[6] = copy[7] + copy[0];
-    parsed[7] = copy[8];
-    parsed[8] = copy[0];
-}
+Iterate(parsed, 80);
 
 Console.WriteLine(parsed.Values.Sum());
 
+Iterate(parsed, 256-80);
+
+Console.WriteLine(parsed.Values.Sum());
+
+static void Iterate(Dictionary<int, long> fish, int iterations)
+{
+    for (int i = 0; i < iterations; i++)
+    {
+        var copy = fish.ToDictionary(p => p.Key, p => p.Value);
+
+        // this will do lol
+        fish[0] = copy[1];
+        fish[1] = copy[2];
+        fish[2] = copy[3];
+        fish[3] = copy[4];
+        fish[4] = copy[5];
+        fish[5] = copy[6];
+        fish[6] = copy[7] + copy[0];
+        fish[7] = copy[8];
+        fish[8] = copy[0];
+    }
+}
