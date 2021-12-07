@@ -5,21 +5,7 @@ var line = File.ReadAllLines("./input.txt")[0];
 
 var positions = line.Split(",").Select(l => int.Parse(l)).ToList();
 
-var avg = positions.Average();
-
-var intavg = Math.Round(avg);
-
-
-var fuel = 0;
-foreach(var crab in positions)
-{
-    fuel += (int)Math.Abs(crab - intavg);
-}
-
-Console.WriteLine(fuel); // 355875 too high
-
-
-// ok brute force since I'm not clever, cba looking up median
+// brute force since I'm not clever, cba looking up median
 
 var smallest = int.MaxValue;
 
@@ -33,7 +19,7 @@ for (int i = 0; i < positions.Max(); i++)
     }
 }
 
-Console.WriteLine(smallest); // 335271 lol i wasn't even far off
+Console.WriteLine(smallest);
 
 
 // part 2
@@ -51,4 +37,4 @@ for (int i = 0; i < positions.Max(); i++)
     }
 }
 
-Console.WriteLine(smallest); // 95495476 too low
+Console.WriteLine(smallest);
