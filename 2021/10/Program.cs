@@ -1,6 +1,27 @@
 ﻿var lines = File.ReadAllLines("./input.txt");
 
-var startChars = new [] {'(', '{', '[', '<'};
+var matchingSymbols = new Dictionary<char, char>{
+    { '(', ')' },
+    { '[', ']' },
+    { '{', '}' },
+    { '<', '>' }
+};
+
+// checker and completer score on different things so can use one dict for both B-)
+var pointValues = new Dictionary<char, int>
+{
+    // syntax checker scores
+    { ')', 3 },
+    { ']', 57 },
+    { '}', 1197 },
+    { '>', 25137 },
+    
+    // auto completer scores
+    { '(', 1 },
+    { '[', 2 },
+    { '{', 3 },
+    { '<', 4 }
+};
 
 var checkerScore = 0;
 var completerScores = new List<long>();
@@ -9,71 +30,23 @@ foreach(var line in lines)
 {
     var lineCorrupt = false;
     var stack = new Stack<char>();
-    for(int i = 0; i < line.Length; i++)
+    for(int i = 0; i < line.Length && !lineCorrupt; i++)
     {
-        if (lineCorrupt)
-        {
-            break;
-        }
-
-        if (startChars.Contains(line[i]))
+        if (matchingSymbols.Keys.Contains(line[i]))
         {
             stack.Push(line[i]);
         }
         else
         {
-            // todo tidy this mess...
-            switch (line[i]) {
-                case '}':
-                    if (stack.Peek() != '{')
-                    {
-                        checkerScore += 1197;
-                        lineCorrupt = true;
-                        continue;
-                    }
-                    else
-                    {
-                        stack.Pop();
-                    }
-                    break;
-                case ']':
-                    if (stack.Peek() != '[')
-                    {
-                        checkerScore += 57;
-                        lineCorrupt = true;
-                        continue;
-                    }
-                    else
-                    {
-                        stack.Pop();
-                    }
-                    break;
-                case '>':
-                    if (stack.Peek() != '<')
-                    {
-                        checkerScore += 25137;
-                        lineCorrupt = true;
-                        continue;
-                    }
-                    else
-                    {
-                        stack.Pop();
-                    }
-                    break;
-                case ')':
-                    if (stack.Peek() != '(')
-                    {
-                        checkerScore += 3;
-                        lineCorrupt = true;
-                        continue;
-                    }
-                    else
-                    {
-                        stack.Pop();
-                    }
-                    break;
-                default:
-                    throw new Exception("oh noes");
+            if (line[i] != matchingSymbols[stack.Peek()])
+            {
+                checkerScore += pointValues[line[i]];
+                lineCorrupt=true;
+            }
+            else
+            {
+                // not corrupt, so pop the match
+                stack.Pop();
             }
         }
     }
@@ -86,23 +59,7 @@ foreach(var line in lines)
         {
             var character = stack.Pop();
             lineCompleterScore *= 5;
-            switch (character)
-            {
-                case '{':
-                    lineCompleterScore += 3;
-                    break;
-                case '(':
-                    lineCompleterScore += 1;
-                    break;
-                case '[':
-                    lineCompleterScore += 2;
-                    break;
-                case '<':
-                    lineCompleterScore += 4;
-                    break;
-                default:
-                    throw new Exception ("oh noes");
-            }
+            lineCompleterScore += pointValues[character];
         }
         completerScores.Add(lineCompleterScore);
     }
@@ -111,4 +68,5 @@ foreach(var line in lines)
 Console.WriteLine(checkerScore);
 
 completerScores = completerScores.OrderByDescending(c => c).ToList();
+// assume there's an odd number
 Console.WriteLine(completerScores[(completerScores.Count - 1) / 2]);
