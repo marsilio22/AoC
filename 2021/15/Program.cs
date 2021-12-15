@@ -1,6 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
-
-var lines = File.ReadAllLines("./input.txt").ToList();
+﻿var lines = File.ReadAllLines("./input.txt").ToList();
 
 var map = new Dictionary<(int x, int y), Node>();
 
@@ -20,6 +18,7 @@ for (int c = 0; c < 5; c ++)
 }
 Console.WriteLine();
 
+// draw
 // var maxX = map.MaxBy(m => m.Key.x).Key.x;
 // var maxY = map.MaxBy(m => m.Key.y).Key.y;
 
@@ -35,7 +34,7 @@ Console.WriteLine();
 (int x, int y) current = (0, 0);
 (int x, int y) end = map.Last().Key;
 
-var adjacents = new List<(int x, int y)>();
+var adjacents = new List<(int x, int y)>(); // priorityqueue here instead?
 
 adjacents.AddRange(map[current].Adjacents);
 
@@ -43,6 +42,7 @@ map[current].Distance = 0;
 
 while(adjacents.Any() && map[end].Distance == int.MaxValue)
 {
+    // this is probably inefficient eh?
     var next = adjacents.MinBy(a => map[a].Risk + map[map[a].Adjacents.MinBy(b => map[b].Distance)].Distance); 
 
     map[next].Distance = map[next].Risk + map[map[next].Adjacents.MinBy(a => map[a].Distance)].Distance;
