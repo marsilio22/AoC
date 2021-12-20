@@ -1,4 +1,9 @@
-﻿var lines = File.ReadAllLines("./input.txt");
+﻿using System.Diagnostics;
+
+var stopwatch = new Stopwatch();
+stopwatch.Start();
+
+var lines = File.ReadAllLines("./input.txt");
 
 IDictionary < int, List < (int x, int y, int z) >> scanners = new Dictionary < int, List < (int, int, int) >>();
 int currentScanner = 0;
@@ -48,8 +53,6 @@ foreach (var scanner in scanners)
     }
 }
 
-Console.WriteLine();
-
 var allOverlaps = new Dictionary < (int s1, int s2),
     List < (Beacon b1, Beacon b2) >>();
 
@@ -68,18 +71,11 @@ for (int i = 0; i < beaconsByScanner.Count; i++)
             }
         }
 
-        Console.WriteLine($"Between scanner {i} and scanner {j} there were {ijPotentialOverlap.Count()} potential overlapping points");
+        // Console.WriteLine($"Between scanner {i} and scanner {j} there were {ijPotentialOverlap.Count()} potential overlapping points");
 
         allOverlaps.Add((i, j), ijPotentialOverlap);
     }
 }
-
-// hmm this doesn't work because some of the overlapping points overlap between multiple pairs
-// var thing = scanners.Values.SelectMany(v => v).Count() - test.Values.Sum();
-
-// try again with proper info about which beacons overlap
-
-Console.WriteLine();
 
 var distinctPoints = scanners.ToDictionary(k => k.Key, k => k.Value);
 
@@ -91,11 +87,14 @@ foreach (var pair in allOverlaps)
     }
 }
 
+// Part 1 answer
 Console.WriteLine(distinctPoints.Values.SelectMany(v => v).Count());
+Console.WriteLine($"Part 1 took {stopwatch.ElapsedMilliseconds}ms");
+
+stopwatch.Reset();
+stopwatch.Start();
 
 var actualOverlappingScanners = allOverlaps.Where(v => v.Value.Count > 11).ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
-
-Console.WriteLine();
 
 Dictionary < int, (int x, int y, int z) > scannerLocations = new Dictionary < int, (int x, int y, int z) > { { 0, (0, 0, 0) } };
 
@@ -185,7 +184,7 @@ while (actualOverlappingScanners.Any(s => scannerLocations.ContainsKey(s.Key.s1)
 
             if (unknownXdiff1 == knownXdiff1 && unknownYdiff1 == knownYdiff1 && unknownZdiff1 == knownZdiff1)
             {
-                Console.WriteLine($"i {i}, j {j} between scanners {scannerPair.Key.s1} and {scannerPair.Key.s2}");
+                // Console.WriteLine($"i {i}, j {j} between scanners {scannerPair.Key.s1} and {scannerPair.Key.s2}");
 
                 // need to replace the existing set of matched locations by their rotated coords wrt the known scanner
                 if (scannerLocations.ContainsKey(scannerPair.Key.s1))
@@ -294,7 +293,11 @@ for (int i = 0; i < scannerLocations.Count; i++)
     }
 }
 
+// Part 2 answer
 Console.WriteLine(maxDistance);
+
+Console.WriteLine($"Part 2 took {stopwatch.ElapsedMilliseconds}ms");
+
 
 class Beacon
 {
