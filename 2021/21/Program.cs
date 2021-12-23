@@ -100,3 +100,11 @@ var possibilities = new List<int>
 var groups = possibilities.GroupBy(p => p).Select(g => (g.Key, g.Count())).ToList();
 
 Console.WriteLine();
+
+// recursively
+// - check the next set of dice rolls (see groups above)
+// - figure out the number of ways to get to 21 for each respective dice roll recursively
+// - multiply the ways together on the way back up.
+
+// calculate the full tree of (waysTo21, turnsToGetThere) for both start positions
+// work out who wins more etc, based on that.
