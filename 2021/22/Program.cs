@@ -1,8 +1,8 @@
 ﻿using System.Diagnostics;
 
-var lines = File.ReadAllLines("./input4.txt");
+var lines = File.ReadAllLines("./input.txt");
 
-var instructions = new Dictionary<Cuboid, int>();
+var outerInstructions = new Dictionary<Cuboid, int>();
 
 foreach (var line in lines)
 {
@@ -17,67 +17,102 @@ foreach (var line in lines)
 
     var coords = split[1].Split(",").Select(s => s.Split("=")[1].Split("..")).ToList();
 
-    var boid = new Cuboid(
-        int.Parse(coords[0][0]), 
-        int.Parse(coords[0][1]), 
-        int.Parse(coords[1][0]), 
-        int.Parse(coords[1][1]), 
-        int.Parse(coords[2][0]), 
-        int.Parse(coords[2][1]));
+    
+    var x1 = int.Parse(coords[0][0]); 
+    var x2 = int.Parse(coords[0][1]);
 
-    instructions[boid] = onOff;
+    var y1 = int.Parse(coords[1][0]); 
+    var y2 = int.Parse(coords[1][1]); 
+    
+    var z1 = int.Parse(coords[2][0]); 
+    var z2 = int.Parse(coords[2][1]);
+
+    var boid = new Cuboid(Math.Min(x1, x2), Math.Max(x1, x2), Math.Min(y1, y2), Math.Max(y1, y2), Math.Min(z1, z2), Math.Max(z1, z2));
+
+    outerInstructions[boid] = onOff;
 }
 
-// brute force for now
-IDictionary < (int x, int y, int z), int > states = new Dictionary < (int, int, int), int > ();
+// for (int p = 1; p < outerInstructions.Count(); p++)
+// {
+    var instructions = outerInstructions/*.Take(p)*/;
 
-foreach (var instr in instructions)
-{
-    var boid = instr.Key;
+    // brute force for now
+    IDictionary < (int x, int y, int z), int > states = new Dictionary < (int, int, int), int > ();
 
-    for (int k = Math.Max(-50, boid.minZ); k <= Math.Min(50, boid.maxZ); k++)
+    foreach (var instr in instructions)
     {
-        for (int j = Math.Max(-50, boid.minY); j <= Math.Min(50, boid.maxY); j++)
+        var boid = instr.Key;
+
+        for (int k = Math.Max(-50, boid.minZ); k <= Math.Min(50, boid.maxZ); k++)
         {
-            for (int i = Math.Max(-50, boid.minX); i <= Math.Min(50, boid.maxX); i++)
+            for (int j = Math.Max(-50, boid.minY); j <= Math.Min(50, boid.maxY); j++)
             {
-                states[(i, j, k)] = instr.Value;
+                for (int i = Math.Max(-50, boid.minX); i <= Math.Min(50, boid.maxX); i++)
+                {
+                    states[(i, j, k)] = instr.Value;
+                }
             }
         }
     }
-}
 
-Console.WriteLine(states.Sum(s => s.Value));
+    var p1 = states.Sum(s => s.Value);
+
+    Console.WriteLine(states.Sum(s => s.Value));
 
 
 
 
-// part 2
-ICollection<Cuboid> onCubes = new List<Cuboid>();
-var loopCount = 0;
+    // part 2
+    ICollection<Cuboid> onCubes = new List<Cuboid>();
+    var loopCount = 0;
 
-var sw = new Stopwatch();
-sw.Start();
+    var sw = new Stopwatch();
+    sw.Start();
 
-foreach (var instruction in instructions)
-{
-    var intersectors = onCubes.Where(o => o.Intersects(instruction.Key)).ToList();
-
-    Console.WriteLine($"{intersectors.Count} intersectors");
-    if (instruction.Value == 1)
+    foreach (var instruction in instructions)
     {
-        if (intersectors.Count == 0)
+        var intersectors = onCubes.Where(o => o.Intersects(instruction.Key)).ToList();
+    
+        // Console.WriteLine($"{intersectors.Count} intersectors");
+        if (instruction.Value == 1)
         {
-            onCubes.Add(instruction.Key);
+            if (intersectors.Count == 0)
+            {
+                onCubes.Add(instruction.Key);
+            }
+            else
+            {
+                // something which is *on* intersects the cube we are about to turn *on*
+                foreach(var onCube in intersectors)
+                {
+                    onCubes.Remove(onCube);
+
+                    var newCubes = Cuboid.SplitIntersection(onCube, instruction.Key, true);
+                    
+                    foreach(var newCube in newCubes)
+                    {
+                        var gluable = onCubes.FirstOrDefault(o => o.IsGluable(newCube));
+                        if (gluable != null)
+                        {
+                            onCubes.Remove(gluable);
+                            onCubes.Add(Cuboid.Glue(gluable, newCube));
+                        }
+                        else
+                        {                            
+                            onCubes.Add(newCube);
+                        }
+                    }
+                }
+            }
         }
         else
         {
-            // something which is *on* intersects the cube we are about to turn *on*
+            // figure out what we're turning off
             foreach(var onCube in intersectors)
             {
                 onCubes.Remove(onCube);
 
-                var newCubes = Cuboid.SplitIntersection(onCube, instruction.Key, true);
+                var newCubes = Cuboid.SplitIntersection(onCube, instruction.Key, false);
                 
                 foreach(var newCube in newCubes)
                 {
@@ -94,39 +129,57 @@ foreach (var instruction in instructions)
                 }
             }
         }
-    }
-    else
-    {
-        // figure out what we're turning off
-        foreach(var onCube in intersectors)
-        {
-            onCubes.Remove(onCube);
 
-            var newCubes = Cuboid.SplitIntersection(onCube, instruction.Key, false);
-            
-            foreach(var newCube in newCubes)
+        if (instruction.Value == 1)
+        {
+            onCubes = onCubes.Distinct().ToList();
+
+            // holy hell i hate this.
+            while(true)
             {
-                var gluable = onCubes.FirstOrDefault(o => o.IsGluable(newCube));
-                if (gluable != null)
+                bool breakTime = true;
+
+                for (int g = 0; g < onCubes.Count; g++)
                 {
-                    onCubes.Remove(gluable);
-                    onCubes.Add(Cuboid.Glue(gluable, newCube));
+                    var thing = onCubes.Skip(g+1).Where(o => o.Intersects(onCubes.ToList()[g])).ToList();
+                    if (thing.Any())
+                    {
+                        var gCube = onCubes.ToList()[g];
+                        onCubes.Remove(gCube);
+                        onCubes.Remove(thing.First());
+
+                        var intersect = Cuboid.SplitIntersection(gCube, thing.First(), true);
+
+                        foreach(var thing2 in intersect)
+                        {
+                            onCubes.Add(thing2);
+                        }
+                        breakTime = breakTime && false;
+                    }
                 }
-                else
+
+                if (breakTime)
                 {
-                    onCubes.Add(newCube);
+                    break;
                 }
             }
         }
+
+
+        onCubes = onCubes.Distinct().ToList();
+        loopCount++;
+        Console.WriteLine($"loop {loopCount}, {sw.ElapsedMilliseconds}ms, {onCubes.Count()} on cubes" );
     }
 
-    loopCount++;
-    Console.WriteLine($"loop {loopCount}, {sw.ElapsedMilliseconds}ms, {onCubes.Count()} on cubes" );
-}
+    Console.WriteLine(onCubes.Sum(o => o.Volume()));
+    var p2 = onCubes.Sum(o => o.Volume());
 
-Console.WriteLine(onCubes.Sum(o => o.Volume()));
+    if (p1 != p2)
+    {
+        Console.WriteLine();
+    }
 
-
+//}
 
 
 class Cuboid
@@ -403,5 +456,42 @@ class Cuboid
     public override string ToString()
     {
         return $"[({minX}..{maxX}),({minY}..{maxY}),({minZ}..{maxZ})]";
+    }
+    
+    public override bool Equals(object? obj)
+    {
+        if (obj == null)
+        {
+            return false;
+        }
+
+        if (obj.GetType() == this.GetType())
+        {
+            var typed = ((Cuboid) obj);
+
+            return typed.minX == this.minX &&
+                    typed.maxX == this.maxX &&
+                    typed.minY == this.minY &&
+                    typed.maxY == this.maxY &&
+                    typed.minZ == this.minZ &&
+                    typed.maxZ == this.maxZ;
+        }
+
+        return false;
+    }
+
+    public override int GetHashCode()
+    {
+        unchecked // Allow arithmetic overflow, numbers will just "wrap around"
+        {
+            int hashcode = 1430287;
+            hashcode = hashcode * 7302013 ^ minX.GetHashCode();
+            hashcode = hashcode * 7302013 ^ maxX.GetHashCode();
+            hashcode = hashcode * 7302013 ^ minY.GetHashCode();
+            hashcode = hashcode * 7302013 ^ maxY.GetHashCode();
+            hashcode = hashcode * 7302013 ^ minZ.GetHashCode();
+            hashcode = hashcode * 7302013 ^ maxZ.GetHashCode();
+            return hashcode;
+        }
     }
 }
