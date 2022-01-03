@@ -1,11 +1,22 @@
 ﻿List<string> lines = File.ReadAllLines("./input.txt").ToList();
 
-var searchCollection = (from a in Enumerable.Range('a', 26)
+var TLSSearchCollection = (from a in Enumerable.Range('a', 26)
 from b in Enumerable.Range('a', 26)
 where a != b
 select(((char)a).ToString() + (char)b + (char)b + (char)a)).ToList();
 
-var count = 0;
+
+
+var ABAs = (from a in Enumerable.Range('a', 26)
+    from b in Enumerable.Range('a', 26)
+    where a != b
+    select (((char)a).ToString() + (char)b + (char)a)).ToList();
+
+List<(string first, string second)> SSLSearchCollection = ABAs.Select(s => (s, s[1].ToString() + s[0] + s[1])).ToList();
+
+
+var countTLS = 0;
+var countSSL = 0;
 
 foreach(var line in lines)
 {
@@ -44,10 +55,16 @@ foreach(var line in lines)
     lineOutsideBrackets += line2;
 
 
-    if (!searchCollection.Any(a => lineInsideBrackets.Contains(a)) && searchCollection.Any(a => lineOutsideBrackets.Contains(a)))
+    if (!TLSSearchCollection.Any(a => lineInsideBrackets.Contains(a)) && TLSSearchCollection.Any(a => lineOutsideBrackets.Contains(a)))
     {
-        count++;
+        countTLS++;
+    }
+
+    if (SSLSearchCollection.Any(a => lineInsideBrackets.Contains(a.first) && lineOutsideBrackets.Contains(a.second)))
+    {
+        countSSL++;
     }
 }
 
-Console.WriteLine(count);
+Console.WriteLine(countTLS);
+Console.WriteLine(countSSL);
