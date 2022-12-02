@@ -25,8 +25,7 @@ foreach (var line in lines)
     var them = line[0];
     var me = line[2];
 
-    points += me
-    switch
+    points += me switch
     {
         'X' => them switch 
         {
