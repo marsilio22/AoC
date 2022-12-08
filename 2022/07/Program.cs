@@ -1,6 +1,5 @@
 ﻿var lines = File.ReadAllLines("./input.txt");
 
-
 var currentDirectory = "";
 
 var sizes = new Dictionary<string, long>{[currentDirectory] = 0};
@@ -58,6 +57,5 @@ Console.WriteLine();
 
 var totalSize = 70000000;
 var remaining = totalSize - structure.Sum(s => s.Value);
-
 
 Console.WriteLine(sizes.Where(s => s.Value >= (30000000 - remaining)).OrderBy(s => s.Value).First().Value);
