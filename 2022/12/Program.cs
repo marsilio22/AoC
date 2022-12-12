@@ -16,21 +16,27 @@ for (int j = 0; j < input.Length; j++)
     }
 }
 
-var current = map.Single(d => d.Value.height == 'S');
+var start = map.Single(d => d.Value.height == 'S');
 var target = map.Single(d => d.Value.height == 'E');
 
-map[current.Key] = ('a', 0);
+map[start.Key] = ('a', 0);
 map[target.Key] = ('z', int.MaxValue);
 
-var visited = new HashSet<(int, int)>{current.Key};
+var visited = new HashSet<(int, int)>{start.Key};
+var noMoreValidNeighbours = new HashSet<(int, int)>();
 
 while(!visited.Contains(target.Key))
 {
-    var visitedKVPs = map.Where(m => visited.Contains(m.Key));
+    var visitedKVPs = map.Where(m => visited.Contains(m.Key) && !noMoreValidNeighbours.Contains(m.Key));
     
     foreach(var kvp in visitedKVPs)
     {
         var neighbours = Neighbours(map, kvp.Key).Where(n => n.Value.height - kvp.Value.height <= 1 && n.Value.distance > kvp.Value.distance + 1);
+
+        if (!neighbours.Any())
+        {
+            noMoreValidNeighbours.Add(kvp.Key);
+        }
 
         foreach(var n in neighbours)
         {
@@ -55,23 +61,30 @@ for (int j = 0; j < input.Length; j++)
 }
 
 var S = map.Single(d => d.Value.height == 'S');
-current = map.Single(d => d.Value.height == 'E');
+start = map.Single(d => d.Value.height == 'E');
 
 map[S.Key] = ('a', int.MaxValue);
-map[current.Key] = ('z', 0);
+map[start.Key] = ('z', 0);
 
-visited = new HashSet<(int, int)>{current.Key};
+visited = new HashSet<(int, int)>{start.Key};
+noMoreValidNeighbours = new HashSet<(int, int)>();
 var visitedLastRound = 0;
+
 
 while(visited.Count() > visitedLastRound)
 {
-    var visitedKVPs = map.Where(m => visited.Contains(m.Key));
+    var visitedKVPs = map.Where(m => visited.Contains(m.Key) && !noMoreValidNeighbours.Contains(m.Key));
     visitedLastRound = visited.Count();
     
     foreach(var kvp in visitedKVPs)
     {
         var neighbours = Neighbours(map, kvp.Key).Where(n => kvp.Value.height - n.Value.height <= 1 && n.Value.distance > kvp.Value.distance + 1);
 
+        if (!neighbours.Any())
+        {
+            noMoreValidNeighbours.Add(kvp.Key);
+        }
+        
         foreach(var n in neighbours)
         {
             map[n.Key] = (n.Value.height, kvp.Value.distance + 1);
