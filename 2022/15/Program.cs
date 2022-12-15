@@ -81,17 +81,18 @@ foreach(var distance in distances)
         }
     
         y1 = Math.Min(Math.Max(y1, 0), maxXY);
-        y2 = Math.Min(Math.Max(y2, 0), maxXY);
+        y2 = Math.Min(Math.Max(y2, 0), maxXY);        
 
-        var testY1= distances.Where(d => Math.Abs(d.Key.x - x) + Math.Abs(d.Key.y - y1) <= d.Value);
-        var testY2 = distances.Where(d => Math.Abs(d.Key.x - x) + Math.Abs(d.Key.y - y2) <= d.Value);
-        if (!testY1.Any())
+        var testY1 = !distances.Any(d => Math.Abs(d.Key.x - x) + Math.Abs(d.Key.y - y1) <= d.Value);
+        if (testY1)
         {
             Console.WriteLine($"x: {x}, y: {y1}, ans: {x * 4_000_000 + y1}");
             Console.WriteLine($"{sw.ElapsedMilliseconds}ms");
             return;
         }
-        else if (!testY2.Any())
+
+        var testY2 = !distances.Any(d => Math.Abs(d.Key.x - x) + Math.Abs(d.Key.y - y2) <= d.Value);
+        if (testY2)
         {
             Console.WriteLine($"x: {x}, y: {y2}, ans: {x * 4_000_000 + y2}");
             Console.WriteLine($"{sw.ElapsedMilliseconds}ms");
