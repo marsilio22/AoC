@@ -1,4 +1,9 @@
-﻿var lines = File.ReadAllLines("./input");
+﻿using System.Diagnostics;
+
+var lines = File.ReadAllLines("./input");
+
+var sw = new Stopwatch();
+sw.Start();
 
 var beacons = new Dictionary<(int x, int y), (int x, int y)>();
 var distances = new Dictionary<(int x, int y), int>();
@@ -20,38 +25,38 @@ foreach (var line in lines)
 Console.WriteLine();
 
 var yOfInterest = 2_000_000;
-//var yOfInterest = 10;
+// yOfInterest = 10;
 
-var maxX = distances.Keys.Max(k => k.x);
-var minX = distances.Keys.Min(k => k.x);
-var maxDist = distances.Values.Max();
-
-distances = distances.OrderBy(o => Math.Abs(yOfInterest - o.Key.y)).ToDictionary(k => k.Key, k => k.Value);
 var count = 0;
 
-// todo can speed this up easy using the part2 method
-for (int i = minX - maxDist; i < maxX + maxDist;)
-{
-    var coverers = distances.Where(d => Math.Abs(d.Key.x - i) + Math.Abs(d.Key.y - yOfInterest) <= d.Value).ToArray();
-    
-    if (!coverers.Any())
-    {
-        i++; 
-    }
+var ranges = new List<(int min, int max)>();
 
-    while (coverers.Any())
-    {
-        i++;
-        count++; // no beacon can exist on a spot covered by another sensor
-        coverers = distances.Where(d => Math.Abs(d.Key.x - i) + Math.Abs(d.Key.y - yOfInterest) < d.Value).ToArray();
+foreach(var distance in distances)
+{
+    int x1, x2;
+
+    x1 = distance.Key.x - (distance.Value - Math.Abs(distance.Key.y - yOfInterest));
+    x2 = distance.Key.x + (distance.Value - Math.Abs(distance.Key.y - yOfInterest));
+    
+    ranges.Add((x1, x2));
+}
+
+var conglomerateRange = new List<int>();
+
+foreach(var range in ranges)
+{
+    if (range.min <= range.max){
+        conglomerateRange.AddRange(Enumerable.Range(range.min, range.max - range.min + 1));
     }
 }
 
-count = count - beacons.Where(b => b.Value.y == yOfInterest).Select(v => v.Value).Distinct().Count();
+count = conglomerateRange.ToHashSet().Count() - beacons.Where(b => b.Value.y == yOfInterest).Select(v => v.Value).Distinct().Count();
 
 Console.WriteLine(count);
+Console.WriteLine($"{sw.ElapsedMilliseconds}ms");
 
-var coordsToCheck = new HashSet<(int x, int y)>();
+sw.Reset();
+sw.Start();
 
 var maxXY = 4_000_000;
 // var maxXY = 20;
@@ -68,7 +73,6 @@ foreach(var distance in distances)
         {
             y1 = distance.Key.y + (x - xMin);
             y2 = distance.Key.y + (xMin - x);
-
         }
         else
         {
@@ -84,15 +88,14 @@ foreach(var distance in distances)
         if (!testY1.Any())
         {
             Console.WriteLine($"x: {x}, y: {y1}, ans: {x * 4_000_000 + y1}");
+            Console.WriteLine($"{sw.ElapsedMilliseconds}ms");
             return;
         }
         else if (!testY2.Any())
         {
             Console.WriteLine($"x: {x}, y: {y2}, ans: {x * 4_000_000 + y2}");
+            Console.WriteLine($"{sw.ElapsedMilliseconds}ms");
             return;
         }
     }
 }
-
-Console.WriteLine(); // 849139071 too low 
-// 849139072 too low
