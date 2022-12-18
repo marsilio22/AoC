@@ -12,7 +12,6 @@ var rocks = new Queue<Rock>();
 // ####
 rocks.Enqueue(new Rock
     {
-        Type = 1,
         Shape = new HashSet<(int x, int y)> { (0, 0), (1, 0), (2, 0), (3, 0) },
         Lefts = new HashSet<(int x, int y)> { (-1, 0) },
         Rights = new HashSet<(int x, int y)>  { (4, 0) },
@@ -25,7 +24,6 @@ rocks.Enqueue(new Rock
 // .#.
 rocks.Enqueue(new Rock
     {
-        Type = 2,
         Shape = new HashSet<(int x, int y)> { (1, 0), (0, 1), (1, 1), (2, 1), (1, 2) },
         Lefts = new HashSet<(int x, int y)> { (0, 2), (-1, 1), (0, 0) }, 
         Rights = new HashSet<(int x, int y)> { (2, 0), (3, 1), (2, 2) },
@@ -38,7 +36,6 @@ rocks.Enqueue(new Rock
 // ###
 rocks.Enqueue(new Rock
     {
-        Type = 3,
         Shape = new HashSet<(int x, int y)> { (0, 0), (1, 0), (2, 0), (2, 1), (2, 2) },
         Lefts = new HashSet<(int x, int y)> { (-1, 0), (1, 1), (1, 2) },
         Rights = new HashSet<(int x, int y)> { (3, 0), (3, 1), (3, 2) },
@@ -52,7 +49,6 @@ rocks.Enqueue(new Rock
 // #
 rocks.Enqueue(new Rock
     {
-        Type = 4,
         Shape = new HashSet<(int x, int y)> { (0, 0), (0, 1), (0, 2), (0, 3) },
         Lefts = new HashSet<(int x, int y)> { (-1, 0), (-1, 1), (-1, 2), (-1, 3) },
         Rights = new HashSet<(int x, int y)> { (1, 0), (1, 1), (1, 2), (1, 3) },
@@ -64,7 +60,6 @@ rocks.Enqueue(new Rock
 // ##
 rocks.Enqueue(new Rock
     {
-        Type = 5,
         Shape = new HashSet<(int x, int y)> { (0, 0), (0, 1), (1, 0), (1, 1) },
         Lefts = new HashSet<(int x, int y)> { (-1, 0), (-1, 1) },
         Rights = new HashSet<(int x, int y)> { (2, 0), (2, 1) },
@@ -124,6 +119,8 @@ while (count < 8000)
 
                 if (cycleStart != 0)
                 {
+                    // this makes sure that if the cycle has internal same states (like the example),
+                    // then we don't count them as a full cycle
                     previousCycleStates.Clear();
                 }
 
@@ -235,7 +232,6 @@ void PrintArea(Dictionary<(int x, int y), char> map, int yRegion)
 
 class Rock 
 {
-    public int Type { get; set; }
     public HashSet<(int x, int y)> Shape { get; set; } = new HashSet<(int x, int y)>();
     public HashSet<(int x, int y)> Lefts { get; set; } = new HashSet<(int x, int y)>();
     public HashSet<(int x, int y)> Rights { get; set; } = new HashSet<(int x, int y)>();
