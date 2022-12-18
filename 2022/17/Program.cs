@@ -77,14 +77,13 @@ var maxY = 0;
 var jetOffset = 0;
 
 var previousHeights = new Dictionary<int, int>();
-var previousStates = new HashSet<(int, int)>();
 
-var cycleStart=0;
+var cycleStart = 0;
 var cycleLength = 0;
 
 var previousCycleStates = new HashSet<Dictionary<(int x, int y), char>>();
 
-while (count < 10000)
+while (count < 8000)
 {
     //PrintArea(map, maxY);
     (int x, int y) newRockPos = (2, maxY+4);
@@ -101,12 +100,15 @@ while (count < 10000)
 
         if (jetOffset == 0 && cycleLength == 0)
         {
+            // here we add the rock to the cached start state we create, because it could matter
+            // e.g. if the current rock falls further than 20 rows down, then this state and the next
+            // would look the same
             foreach(var rockNode in rock.Shape)
             {
                 map.Add((newRockPos.x + rockNode.x, newRockPos.y + rockNode.y), '#');
             }
 
-            PrintArea(map, newRockPos.y + 4);
+            // PrintArea(map, newRockPos.y + 4);
 
             var top20rows = map.Where(m => m.Key.y >= maxY - 20).ToDictionary(k => (k.Key.x, k.Key.y - maxY), v => v.Value);
 
@@ -139,6 +141,7 @@ while (count < 10000)
                 }
             }
 
+            // remove the rock again, since we don't want it to float there forever
             foreach(var rockNode in rock.Shape)
             {
                 map.Remove((newRockPos.x + rockNode.x, newRockPos.y + rockNode.y));
@@ -198,7 +201,7 @@ while (count < 10000)
     }
 }
 
-Console.WriteLine(maxY);
+Console.WriteLine(previousHeights[2022]);
 
 var startingHeight = (long)previousHeights[cycleStart];
 var numberOfCycles = (1_000_000_000_000-cycleStart) / (cycleLength);
@@ -208,9 +211,7 @@ var remainingHeight = previousHeights[cycleStart + (int)remainingRockCount] - pr
 
 var ans =  startingHeight + numberOfCycles*heightPerCycle + remainingHeight;
 
-Console.WriteLine(ans); // 1539965497389 too high
-                        // 1539823008831 wrong
-                        // 1539823008831
+Console.WriteLine(ans); 
 
 void PrintArea(Dictionary<(int x, int y), char> map, int yRegion)
 {
@@ -232,12 +233,11 @@ void PrintArea(Dictionary<(int x, int y), char> map, int yRegion)
     }
 }
 
-
 class Rock 
 {
     public int Type { get; set; }
-    public HashSet<(int x, int y)> Shape { get; set; }
-    public HashSet<(int x, int y)> Lefts { get; set; }
-    public HashSet<(int x, int y)> Rights { get; set; }
-    public HashSet<(int x, int y)> Belows { get; set; }
+    public HashSet<(int x, int y)> Shape { get; set; } = new HashSet<(int x, int y)>();
+    public HashSet<(int x, int y)> Lefts { get; set; } = new HashSet<(int x, int y)>();
+    public HashSet<(int x, int y)> Rights { get; set; } = new HashSet<(int x, int y)>();
+    public HashSet<(int x, int y)> Belows { get; set; } = new HashSet<(int x, int y)>();
 }
