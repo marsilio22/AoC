@@ -19,12 +19,12 @@ foreach(var line  in lines)
 foreach(var vec in map)
 {
     var neighbours = map.Where( m => 
-        m.Key.X == vec.Key.X && m.Key.Y == vec.Key.Y && m.Key.Z == vec.Key.Z + 1 ||
-        m.Key.X == vec.Key.X && m.Key.Y == vec.Key.Y && m.Key.Z == vec.Key.Z - 1 ||
-        m.Key.X == vec.Key.X && m.Key.Y == vec.Key.Y + 1 && m.Key.Z == vec.Key.Z ||
-        m.Key.X == vec.Key.X && m.Key.Y == vec.Key.Y - 1 && m.Key.Z == vec.Key.Z ||
-        m.Key.X == vec.Key.X + 1 && m.Key.Y == vec.Key.Y && m.Key.Z == vec.Key.Z ||
-        m.Key.X == vec.Key.X - 1 && m.Key.Y == vec.Key.Y && m.Key.Z == vec.Key.Z);
+        m.Key == new Vector3(vec.Key.X + 1, vec.Key.Y, vec.Key.Z) ||
+        m.Key == new Vector3(vec.Key.X - 1, vec.Key.Y, vec.Key.Z) ||
+        m.Key == new Vector3(vec.Key.X, vec.Key.Y + 1, vec.Key.Z) ||
+        m.Key == new Vector3(vec.Key.X, vec.Key.Y - 1, vec.Key.Z) ||
+        m.Key == new Vector3(vec.Key.X, vec.Key.Y, vec.Key.Z + 1) ||
+        m.Key == new Vector3(vec.Key.X, vec.Key.Y, vec.Key.Z - 1));
 
     map[vec.Key] = 6 - neighbours.Count();
 }
@@ -37,6 +37,10 @@ var maxX = map.Max(m => m.Key.X);
 var maxY = map.Max(m => m.Key.Y);
 var maxZ = map.Max(m => m.Key.Z);
 
+var minX = map.Min(m => m.Key.X);
+var minY = map.Min(m => m.Key.Y);
+var minZ = map.Min(m => m.Key.Z);
+
 var queue = new Queue<Vector3>();
 
 queue.Enqueue(new Vector3(0, 0, 0));
@@ -46,16 +50,16 @@ var bigAirBubble = new HashSet<Vector3>{new Vector3(0, 0, 0)};
 while(queue.TryDequeue(out var current))
 {
     var neighbours = new List<Vector3>{
-        new Vector3(current.X    , current.Y    , current.Z + 1),
-        new Vector3(current.X    , current.Y    , current.Z - 1),
-        new Vector3(current.X    , current.Y + 1, current.Z),
-        new Vector3(current.X    , current.Y - 1, current.Z),
-        new Vector3(current.X + 1, current.Y    , current.Z),
-        new Vector3(current.X - 1, current.Y    , current.Z)};
+        new Vector3(current.X, current.Y, current.Z + 1),
+        new Vector3(current.X, current.Y, current.Z - 1),
+        new Vector3(current.X, current.Y + 1, current.Z),
+        new Vector3(current.X, current.Y - 1, current.Z),
+        new Vector3(current.X + 1, current.Y, current.Z),
+        new Vector3(current.X - 1, current.Y, current.Z)};
 
     foreach(var n in neighbours)
     {
-        if (!map.ContainsKey(n) && !bigAirBubble.Contains(n) && n.X >= -2 && n.Y >= -2 && n.Z >= -2 && n.X <= maxX + 2 && n.Y <= maxY + 2 && n.Z <= maxZ + 2)
+        if (!map.ContainsKey(n) && !bigAirBubble.Contains(n) && n.X >= minX - 1 && n.Y >= minY - 1 && n.Z >= minZ -1 && n.X <= maxX+1 && n.Y <= maxY+1 && n.Z <= maxZ+1)
         {
             bigAirBubble.Add(n);
             queue.Enqueue(n);
