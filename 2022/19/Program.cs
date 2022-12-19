@@ -115,9 +115,9 @@ foreach(var blueprint in blueprints.Take(3))
 
     while (states.TryDequeue(out var state))
     {
-        if (state.time == 0)
+        if (state.time == 1)
         {
-            bestQuality = Math.Max(state.geodes, bestQuality);
+            bestQuality = Math.Max(state.geodes + state.geodebots, bestQuality);
         }
         // else if (state.time + state.obsidian < blueprint.geodebotObsidianCost)
         // {
@@ -134,41 +134,6 @@ foreach(var blueprint in blueprints.Take(3))
                 geodes = state.geodes + state.geodebots
             };
 
-            if (state.ore < maxOre || state.clay < blueprint.obsidianbotClayCost && state.claybots > 0)
-            {
-                states.Enqueue(doNothingState);
-            }
-
-            // tryBuild ore robot
-            if (state.ore >= blueprint.orebotCost && state.orebots < maxOre)
-            {
-                states.Enqueue(doNothingState with {
-                    ore = doNothingState.ore - blueprint.orebotCost, 
-                    orebots = doNothingState.orebots + 1
-                });
-            }
-
-            // tryBuild clay robot
-            if (state.ore >= blueprint.claybotCost && state.claybots < blueprint.obsidianbotClayCost)
-            {
-                states.Enqueue(doNothingState with {
-                    ore = doNothingState.ore - blueprint.claybotCost, 
-                    claybots= doNothingState.claybots + 1
-                });
-            }
-            
-            // tryBuild obs robot
-            if (state.ore >= blueprint.obsidianbotOreCost && 
-                state.clay >= blueprint.obsidianbotClayCost && 
-                state.obsidianbots < blueprint.geodebotObsidianCost)
-            {
-                states.Enqueue(doNothingState with {
-                    ore = doNothingState.ore - blueprint.obsidianbotOreCost, 
-                    clay = doNothingState.clay - blueprint.obsidianbotClayCost,
-                    obsidianbots = doNothingState.obsidianbots + 1
-                });
-            }
-            
             // tryBuild geode robot
             if (state.ore >= blueprint.geodebotOreCost && 
                 state.obsidian >= blueprint.geodebotObsidianCost)
@@ -178,6 +143,43 @@ foreach(var blueprint in blueprints.Take(3))
                     obsidian = doNothingState.obsidian - blueprint.geodebotObsidianCost, 
                     geodebots = doNothingState.geodebots + 1
                 });
+            }
+            else 
+            {
+                if (state.ore < maxOre /* || state.clay < blueprint.obsidianbotClayCost && state.claybots > 0*/)
+                {
+                    states.Enqueue(doNothingState);
+                }
+
+                // tryBuild ore robot
+                if (state.ore >= blueprint.orebotCost && state.orebots < maxOre)
+                {
+                    states.Enqueue(doNothingState with {
+                        ore = doNothingState.ore - blueprint.orebotCost, 
+                        orebots = doNothingState.orebots + 1
+                    });
+                }
+
+                // tryBuild clay robot
+                if (state.ore >= blueprint.claybotCost && state.claybots < blueprint.obsidianbotClayCost)
+                {
+                    states.Enqueue(doNothingState with {
+                        ore = doNothingState.ore - blueprint.claybotCost, 
+                        claybots= doNothingState.claybots + 1
+                    });
+                }
+                
+                // tryBuild obs robot
+                if (state.ore >= blueprint.obsidianbotOreCost && 
+                    state.clay >= blueprint.obsidianbotClayCost && 
+                    state.obsidianbots < blueprint.geodebotObsidianCost)
+                {
+                    states.Enqueue(doNothingState with {
+                        ore = doNothingState.ore - blueprint.obsidianbotOreCost, 
+                        clay = doNothingState.clay - blueprint.obsidianbotClayCost,
+                        obsidianbots = doNothingState.obsidianbots + 1
+                    });
+                }
             }
         }
     }
