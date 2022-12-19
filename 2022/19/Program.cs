@@ -17,167 +17,103 @@ foreach (var line in lines)
     ));
 }
 
-var qualities = new List<int>();
+var bestGeodes = Part(blueprints, 24).ToList();
 
-foreach(var blueprint in blueprints)
+for(int i = 0; i < blueprints.Count; i++)
 {
-    var bestQuality = 0;
-
-    var states = new Queue<State>();
-    states.Enqueue(new State(1, 0, 0, 0, 0, 0, 0, 0, 24));
-
-    var maxOre = new [] { blueprint.orebotCost, blueprint.claybotCost, blueprint.obsidianbotOreCost, blueprint.geodebotOreCost}.Max();
-
-    while (states.TryDequeue(out var state))
-    {
-        if (state.time == 0)
-        {
-            bestQuality = Math.Max(state.geodes, bestQuality);
-        }
-        else
-        {
-            var doNothingState = state with {
-                time = state.time - 1,
-                ore = state.ore + state.orebots,
-                clay = state.clay + state.claybots,
-                obsidian = state.obsidian + state.obsidianbots,
-                geodes = state.geodes + state.geodebots
-            };
-
-            if (state.ore < maxOre || state.clay < blueprint.obsidianbotClayCost && state.claybots > 0)
-            {
-                states.Enqueue(doNothingState);
-            }
-
-            // tryBuild ore robot
-            if (state.ore >= blueprint.orebotCost && state.orebots < maxOre)
-            {
-                states.Enqueue(doNothingState with {
-                    ore = doNothingState.ore - blueprint.orebotCost, 
-                    orebots = doNothingState.orebots + 1
-                });
-            }
-
-            // tryBuild clay robot
-            if (state.ore >= blueprint.claybotCost && state.claybots < blueprint.obsidianbotClayCost)
-            {
-                states.Enqueue(doNothingState with {
-                    ore = doNothingState.ore - blueprint.claybotCost, 
-                    claybots= doNothingState.claybots + 1
-                });
-            }
-            
-            // tryBuild obs robot
-            if (state.ore >= blueprint.obsidianbotOreCost && 
-                state.clay >= blueprint.obsidianbotClayCost)
-            {
-                states.Enqueue(doNothingState with {
-                    ore = doNothingState.ore - blueprint.obsidianbotOreCost, 
-                    clay = doNothingState.clay - blueprint.obsidianbotClayCost,
-                    obsidianbots = doNothingState.obsidianbots + 1
-                });
-            }
-            
-            // tryBuild geode robot
-            if (state.ore >= blueprint.geodebotOreCost && 
-                state.obsidian >= blueprint.geodebotObsidianCost)
-            {
-                states.Enqueue(doNothingState with {
-                    ore = doNothingState.ore - blueprint.geodebotOreCost, 
-                    obsidian = doNothingState.obsidian - blueprint.geodebotObsidianCost, 
-                    geodebots = doNothingState.geodebots + 1
-                });
-            }
-            
-        }
-    }
-
-    qualities.Add(bestQuality * blueprint.id);
+    bestGeodes[i] = bestGeodes[i] * blueprints[i].id;
 }
 
-Console.WriteLine(qualities.Sum());
+Console.WriteLine(bestGeodes.Sum());
 
-long prod = 1;
+bestGeodes = Part(blueprints.Take(3).ToList(), 32).ToList();
 
-foreach(var blueprint in blueprints.Take(3))
+Console.WriteLine(bestGeodes.Aggregate((a, b) => a*b));
+
+ICollection<int> Part(ICollection<Blueprint> blueprints, int time)
 {
-    var bestQuality = 0;
+    var result = new List<int>();
 
-    var states = new Queue<State>();
-    states.Enqueue(new State(1, 0, 0, 0, 0, 0, 0, 0, 32));
-
-    var maxOre = new [] { blueprint.orebotCost, blueprint.claybotCost, blueprint.obsidianbotOreCost, blueprint.geodebotOreCost}.Max();
-
-    while (states.TryDequeue(out var state))
+    foreach(var blueprint in blueprints)
     {
-        if (state.time == 1)
+        var bestQuality = 0;
+
+        var states = new Queue<State>();
+        states.Enqueue(new State(1, 0, 0, 0, 0, 0, 0, 0, time));
+
+        var maxOre = new [] { blueprint.orebotCost, blueprint.claybotCost, blueprint.obsidianbotOreCost, blueprint.geodebotOreCost}.Max();
+
+        while (states.TryDequeue(out var state))
         {
-            bestQuality = Math.Max(state.geodes + state.geodebots, bestQuality);
-        }
-        else
-        {
-            var doNothingState = state with {
-                time = state.time - 1,
-                ore = state.ore + state.orebots,
-                clay = state.clay + state.claybots,
-                obsidian = state.obsidian + state.obsidianbots,
-                geodes = state.geodes + state.geodebots
-            };
-
-            // tryBuild geode robot
-            if (state.ore >= blueprint.geodebotOreCost && 
-                state.obsidian >= blueprint.geodebotObsidianCost)
+            if (state.time == 1)
             {
-                states.Enqueue(doNothingState with {
-                    ore = doNothingState.ore - blueprint.geodebotOreCost, 
-                    obsidian = doNothingState.obsidian - blueprint.geodebotObsidianCost, 
-                    geodebots = doNothingState.geodebots + 1
-                });
+                bestQuality = Math.Max(state.geodes + state.geodebots, bestQuality);
             }
-            else 
+            else
             {
-                if (state.ore < maxOre /* || state.clay < blueprint.obsidianbotClayCost && state.claybots > 0*/)
-                {
-                    states.Enqueue(doNothingState);
-                }
+                var doNothingState = state with {
+                    time = state.time - 1,
+                    ore = state.ore + state.orebots,
+                    clay = state.clay + state.claybots,
+                    obsidian = state.obsidian + state.obsidianbots,
+                    geodes = state.geodes + state.geodebots
+                };
 
-                // tryBuild ore robot
-                if (state.ore >= blueprint.orebotCost && state.orebots < maxOre)
+                // tryBuild geode robot
+                if (state.ore >= blueprint.geodebotOreCost && 
+                    state.obsidian >= blueprint.geodebotObsidianCost) // suspect this is now giving me the wrong answer for part 1
                 {
                     states.Enqueue(doNothingState with {
-                        ore = doNothingState.ore - blueprint.orebotCost, 
-                        orebots = doNothingState.orebots + 1
+                        ore = doNothingState.ore - blueprint.geodebotOreCost, 
+                        obsidian = doNothingState.obsidian - blueprint.geodebotObsidianCost, 
+                        geodebots = doNothingState.geodebots + 1
                     });
                 }
+                else 
+                {
+                    if (state.ore < maxOre)
+                    {
+                        states.Enqueue(doNothingState);
+                    }
 
-                // tryBuild clay robot
-                if (state.ore >= blueprint.claybotCost && state.claybots < blueprint.obsidianbotClayCost)
-                {
-                    states.Enqueue(doNothingState with {
-                        ore = doNothingState.ore - blueprint.claybotCost, 
-                        claybots= doNothingState.claybots + 1
-                    });
-                }
-                
-                // tryBuild obs robot
-                if (state.ore >= blueprint.obsidianbotOreCost && 
-                    state.clay >= blueprint.obsidianbotClayCost && 
-                    state.obsidianbots < blueprint.geodebotObsidianCost)
-                {
-                    states.Enqueue(doNothingState with {
-                        ore = doNothingState.ore - blueprint.obsidianbotOreCost, 
-                        clay = doNothingState.clay - blueprint.obsidianbotClayCost,
-                        obsidianbots = doNothingState.obsidianbots + 1
-                    });
+                    // tryBuild ore robot
+                    if (state.ore >= blueprint.orebotCost && state.orebots < maxOre)
+                    {
+                        states.Enqueue(doNothingState with {
+                            ore = doNothingState.ore - blueprint.orebotCost, 
+                            orebots = doNothingState.orebots + 1
+                        });
+                    }
+
+                    // tryBuild clay robot
+                    if (state.ore >= blueprint.claybotCost && state.claybots < blueprint.obsidianbotClayCost)
+                    {
+                        states.Enqueue(doNothingState with {
+                            ore = doNothingState.ore - blueprint.claybotCost, 
+                            claybots= doNothingState.claybots + 1
+                        });
+                    }
+                    
+                    // tryBuild obs robot
+                    if (state.ore >= blueprint.obsidianbotOreCost && 
+                        state.clay >= blueprint.obsidianbotClayCost && 
+                        state.obsidianbots < blueprint.geodebotObsidianCost)
+                    {
+                        states.Enqueue(doNothingState with {
+                            ore = doNothingState.ore - blueprint.obsidianbotOreCost, 
+                            clay = doNothingState.clay - blueprint.obsidianbotClayCost,
+                            obsidianbots = doNothingState.obsidianbots + 1
+                        });
+                    }
                 }
             }
         }
+
+        result.Add(bestQuality);
     }
 
-    prod *= bestQuality;
+    return result;
 }
-
-Console.WriteLine(prod);
 
 record State(
     int orebots,
