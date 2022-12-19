@@ -1,4 +1,5 @@
 ﻿using System.Collections.ObjectModel;
+using System.Globalization;
 
 var lines = File.ReadAllLines("./input2");
 
@@ -25,13 +26,22 @@ foreach(var blueprint in blueprints)
 {
     var bestQuality = 0;
 
-    var states = new Queue<State>();
-    states.Enqueue(new State(1, 0, 0, 0, 0, 0, 0, 0, 24));
+    var states = new HashSet<State>();
+    states.Add(new State(1, 0, 0, 0, 0, 0, 0, 0, 24));
 
-    while (states.TryDequeue(out var state))
+    var maxOreBots = new [] { blueprint.orebotCost, blueprint.claybotCost, blueprint.geodebotOreCost, blueprint.obsidianbotOreCost }.Max();
+
+    while (states.Any())
     {
-        if (state.time == 0)
+        var state = states.Last();
+        states.Remove(state);
+
+        if (state.time == 0 && state.geodes > 0)
         {
+            if (state.geodes == 17)
+            {
+                Console.WriteLine();
+            }
             bestQuality = Math.Max(state.geodes, bestQuality);
         }
         else if (state.time + state.obsidian < blueprint.geodebotObsidianCost)
@@ -39,139 +49,87 @@ foreach(var blueprint in blueprints)
             // would never make any geodes so don't bother trying
             continue;
         }
-        else
+        else 
         {
-            // var doNothingState = state with {
-            //     time = state.time - 1,
-            //     ore = state.ore + state.orebots,
-            //     clay = state.clay + state.claybots,
-            //     obsidian = state.obsidian + state.obsidianbots,
-            //     geodes = state.geodes + state.geodebots
-            // };
-            
-            // states.Enqueue(doNothingState);
-
-            if (state.geodebots > 0)
+            if (state.geodebots > 0 && bestQuality < state.time * state.geodebots)
             {
                 var waitForGeodesState = state with {
                     time = 0,
                     geodes = state.time * state.geodebots
                 };
 
-                states.Enqueue(state);
+                states.Add(state);
             }
 
-            // do nothing
-            // if (state.ore < blueprint.orebotCost &&
-            //     state.ore < blueprint.claybotCost &&
-            //     (state.ore < blueprint.obsidianbotOreCost || state.clay < blueprint.obsidianbotClayCost) &&
-            //     (state.ore < blueprint.geodebotOreCost || state.obsidian < blueprint.geodebotObsidianCost))
-            // {
-                // only do nothing if we can't do anything else
-            // }
-
-            // // tryBuild ore robot
-            // if (state.ore >= blueprint.orebotCost)
-            // {
-            //     states.Enqueue(doNothingState with {
-            //         ore = doNothingState.ore - blueprint.orebotCost, 
-            //         orebots = doNothingState.orebots + 1
-            //     });
-            // }
-
-            // // tryBuild clay robot
-            // if (state.ore >= blueprint.claybotCost)
-            // {
-            //     states.Enqueue(doNothingState with {
-            //         ore = doNothingState.ore - blueprint.claybotCost, 
-            //         claybots= doNothingState.claybots + 1
-            //     });
-            // }
-            
-            // // tryBuild obs robot
-            // if (state.ore >= blueprint.obsidianbotOreCost && 
-            //     state.clay >= blueprint.obsidianbotClayCost)
-            // {
-            //     states.Enqueue(doNothingState with {
-            //         ore = doNothingState.ore - blueprint.obsidianbotOreCost, 
-            //         clay = doNothingState.clay - blueprint.obsidianbotClayCost,
-            //         obsidianbots = doNothingState.obsidianbots + 1
-            //     });
-            // }
-            
-            // // tryBuild geode robot
-            // if (state.ore >= blueprint.geodebotOreCost && 
-            //     state.obsidian >= blueprint.geodebotObsidianCost)
-            // {
-            //     states.Enqueue(doNothingState with {
-            //         ore = doNothingState.ore - blueprint.geodebotOreCost, 
-            //         obsidian = doNothingState.obsidian - blueprint.geodebotObsidianCost, 
-            //         geodebots = doNothingState.geodebots + 1
-            //     });
-            // }
-
+            int turnsToWait;
 
             // wait until I have enough ore for an orebot and build one
-            var turnsToWait = (int)Math.Ceiling((double)(blueprint.orebotCost - state.ore) / state.orebots);
-
-            if (state.time > turnsToWait && turnsToWait > 0)
+            if (state.orebots < maxOreBots)
             {
-                var newOrebotState = state with {
-                    time = state.time - turnsToWait,
-                    ore = state.ore + state.orebots * turnsToWait - blueprint.orebotCost,
-                    clay = state.clay + state.claybots * turnsToWait,
-                    obsidian = state.obsidian + state.obsidianbots * turnsToWait,
-                    geodes = state.geodes + state.geodebots * turnsToWait,
-                    orebots = state.orebots + 1
-                };
+                turnsToWait = (int)Math.Ceiling((double)(blueprint.orebotCost - state.ore) / state.orebots);
 
-                states.Enqueue(newOrebotState);
-            }
-            else if (turnsToWait < 0)
-            {
-                var newOrebotState = state with {
-                    time = state.time - 1,
-                    ore = state.ore + state.orebots - blueprint.orebotCost,
-                    clay = state.clay + state.claybots,
-                    obsidian = state.obsidian + state.obsidianbots,
-                    geodes = state.geodes + state.geodebots,
-                    orebots = state.orebots + 1
-                };
-                
-                states.Enqueue(newOrebotState);
-            }
+                if (state.time > turnsToWait && turnsToWait > 0)
+                {
+                    var newOrebotState = state with {
+                        time = state.time - turnsToWait,
+                        ore = state.ore + state.orebots * turnsToWait - blueprint.orebotCost,
+                        clay = (state.clay + state.claybots * turnsToWait),
+                        obsidian = state.obsidian + state.obsidianbots * turnsToWait,
+                        geodes = state.geodes + state.geodebots * turnsToWait,
+                        orebots = state.orebots + 1
+                    };
 
-            // wait until I have enough ore for a claybod and build one
-            turnsToWait = (int)Math.Ceiling((double)(blueprint.claybotCost - state.ore) / state.orebots);
-
-            if (state.time > turnsToWait && turnsToWait > 0)
-            {
-                var newClaybotState = state with {
-                    time = state.time - turnsToWait,
-                    ore = state.ore + state.orebots * turnsToWait - blueprint.claybotCost,
-                    clay = state.clay + state.claybots * turnsToWait,
-                    obsidian = state.obsidian + state.obsidianbots * turnsToWait,
-                    geodes = state.geodes + state.geodebots * turnsToWait,
-                    claybots = state.claybots + 1
-                };
-
-                states.Enqueue(newClaybotState);
-            }
-            else if (turnsToWait < 0)
-            {
-                var newClaybotState = state with {
-                    time = state.time - 1,
-                    ore = state.ore + state.orebots - blueprint.claybotCost,
-                    clay = state.clay + state.claybots,
-                    obsidian = state.obsidian + state.obsidianbots,
-                    geodes = state.geodes + state.geodebots,
-                    claybots = state.claybots + 1
-                };
-                
-                states.Enqueue(newClaybotState);
+                    states.Add(newOrebotState);
+                }
+                else if (turnsToWait < 0)
+                {
+                    var newOrebotState = state with {
+                        time = state.time - 1,
+                        ore = state.ore + state.orebots - blueprint.orebotCost,
+                        clay = (state.clay + state.claybots),
+                        obsidian = state.obsidian + state.obsidianbots,
+                        geodes = state.geodes + state.geodebots,
+                        orebots = state.orebots + 1
+                    };
+                    
+                    states.Add(newOrebotState);
+                }
             }
 
-            // wait until I have enough ore and clayfor an obs bot...
+            if (state.claybots < blueprint.obsidianbotClayCost)
+            {
+                // wait until I have enough ore for a claybot and build one
+                turnsToWait = (int)Math.Ceiling((double)(blueprint.claybotCost - state.ore) / state.orebots);
+
+                if (state.time > turnsToWait && turnsToWait > 0)
+                {
+                    var newClaybotState = state with {
+                        time = state.time - turnsToWait,
+                        ore = state.ore + state.orebots * turnsToWait - blueprint.claybotCost,
+                        clay = (state.clay + state.claybots * turnsToWait),
+                        obsidian = state.obsidian + state.obsidianbots * turnsToWait,
+                        geodes = state.geodes + state.geodebots * turnsToWait,
+                        claybots = state.claybots + 1
+                    };
+
+                    states.Add(newClaybotState);
+                }
+                else if (turnsToWait < 0)
+                {
+                    var newClaybotState = state with {
+                        time = state.time - 1,
+                        ore = state.ore + state.orebots - blueprint.claybotCost,
+                        clay = (state.clay + state.claybots),
+                        obsidian = state.obsidian + state.obsidianbots,
+                        geodes = state.geodes + state.geodebots,
+                        claybots = state.claybots + 1
+                    };
+                    
+                    states.Add(newClaybotState);
+                }
+            }
+
+            // wait until I have enough ore and clay for an obs bot...
             if (state.claybots > 0)
             {
                 turnsToWait = Math.Max(
@@ -184,26 +142,26 @@ foreach(var blueprint in blueprints)
                     var newObsbotState = state with {
                         time = state.time - turnsToWait,
                         ore = state.ore + state.orebots * turnsToWait - blueprint.obsidianbotOreCost,
-                        clay = state.clay + state.claybots * turnsToWait - blueprint.obsidianbotClayCost,
+                        clay = (state.clay + state.claybots * turnsToWait - blueprint.obsidianbotClayCost),
                         obsidian = state.obsidian + state.obsidianbots * turnsToWait,
                         geodes = state.geodes + state.geodebots * turnsToWait,
                         obsidianbots = state.obsidianbots+ 1
                     };
 
-                    states.Enqueue(newObsbotState);
+                    states.Add(newObsbotState);
                 }
                 else if (turnsToWait < 0)
                 {
                     var newObsbotState = state with {
                         time = state.time - 1,
                         ore = state.ore + state.orebots  - blueprint.obsidianbotOreCost,
-                        clay = state.clay + state.claybots  - blueprint.obsidianbotClayCost,
+                        clay = (state.clay + state.claybots  - blueprint.obsidianbotClayCost),
                         obsidian = state.obsidian + state.obsidianbots,
                         geodes = state.geodes + state.geodebots,
                         obsidianbots = state.obsidianbots + 1
                     };
                     
-                    states.Enqueue(newObsbotState);
+                    states.Add(newObsbotState);
                 }
             }
             
@@ -220,26 +178,26 @@ foreach(var blueprint in blueprints)
                     var newGeoBotState = state with {
                         time = state.time - turnsToWait,
                         ore = state.ore + state.orebots * turnsToWait - blueprint.geodebotOreCost,
-                        clay = state.clay + state.claybots * turnsToWait,
+                        clay = (state.clay + state.claybots * turnsToWait),
                         obsidian = state.obsidian + state.obsidianbots * turnsToWait - blueprint.geodebotObsidianCost,
                         geodes = state.geodes + state.geodebots * turnsToWait,
                         geodebots= state.geodebots + 1
                     };
 
-                    states.Enqueue(newGeoBotState);
+                    states.Add(newGeoBotState);
                 }
                 else if (turnsToWait < 0)
                 {
                     var newGeoBotState = state with {
                         time = state.time - 1,
                         ore = state.ore + state.orebots - blueprint.geodebotOreCost,
-                        clay = state.clay + state.claybots,
+                        clay = (state.clay + state.claybots),
                         obsidian = state.obsidian + state.obsidianbots  - blueprint.geodebotObsidianCost,
                         geodes = state.geodes + state.geodebots,
                         geodebots= state.geodebots + 1
                     };
                     
-                    states.Enqueue(newGeoBotState);
+                    states.Add(newGeoBotState);
                 }
             }
         }
