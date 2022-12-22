@@ -1,6 +1,4 @@
-﻿using System.Data;
-
-var lines = File.ReadAllLines("./input");
+﻿var lines = File.ReadAllLines("./input");
 
 var map = new Dictionary<(int x, int y), char>();
 
