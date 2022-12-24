@@ -21,64 +21,14 @@ foreach(var line in lines)
     row++;
 }
 
-((int x, int y) key, int time, Dictionary<(int x, int y), ICollection<char>> map) start = ((1, 0), 0, map);
-var goal = map.Where(m => !m.Value.Any()).MaxBy(m => m.Key.y).Key;
-bool goalAlreadyVisited = false;
+var maps = new Dictionary<int, Dictionary<(int x, int y), ICollection<char>>>();
 
-var distanceToGoal = goal.x - 1 + goal.y;
+maps.Add(0, map);
 
-var queue = new PriorityQueue<((int x, int y) key, int time, Dictionary<(int x, int y), ICollection<char>> map), int>(500000);
-var minTimeToGoal = int.MaxValue;
-ICollection<(int x, int y)> elfMoves = new [] {  (1, 0), (0, 1), (0, -1), (-1, 0), (0, 0)};
-var previouslySeenStates = new HashSet<(int time, (int x, int y) pos)>();
-
-queue.Enqueue(start, distanceToGoal);
-
-while (queue.TryDequeue(out var state, out int prio))
+for (int i = 1; i < 1000; i++)
 {
-    if (!previouslySeenStates.Add((state.time, state.key)))
-    {
-        continue;
-    }
-
-    map = state.map;
-
-    if (state.key == goal)
-    {
-        Console.WriteLine(state.time);
-        if (!goalAlreadyVisited)
-        {
-            goalAlreadyVisited = true;
-            var temp = goal;
-            goal = start.key;
-            start = (temp, state.time, map);
-
-            queue.Clear();
-            previouslySeenStates.Clear();
-            queue.Enqueue(start, distanceToGoal);
-        }
-        else if (goalAlreadyVisited && state.key == (1, 0))
-        {
-            // head back to goal again
-            var temp = goal;
-            goal = start.key;
-            start = (temp, state.time, map);
-
-            queue.Clear();
-            previouslySeenStates.Clear();
-            queue.Enqueue(start, distanceToGoal);
-        }
-        else
-        {
-            return;
-        }
-        continue;
-    }
-
-    // Console.WriteLine(state.time);
-    // Print(map, state.key);
-    // Console.WriteLine();
-
+    map = maps[i-1];
+    
     // move blizzards
     var nextMapState = map.ToDictionary(m => m.Key, m => m.Value.Contains('#') ? m.Value : (ICollection<char>) new List<char>());
     foreach(var node in map)
@@ -120,16 +70,72 @@ while (queue.TryDequeue(out var state, out int prio))
             nextMapState[next].Add(blizz);
         }
     }
+
+    maps[i] = nextMapState;
+}
+
+((int x, int y) key, int time) start = ((1, 0), 0);
+var goal = map.Where(m => !m.Value.Any()).MaxBy(m => m.Key.y).Key;
+bool goalAlreadyVisited = false;
+
+var distanceToGoal = goal.x - 1 + goal.y;
+
+var queue = new PriorityQueue<((int x, int y) key, int time), int>(2000);
+var minTimeToGoal = int.MaxValue;
+ICollection<(int x, int y)> elfMoves = new [] {  (1, 0), (0, 1), (0, -1), (-1, 0), (0, 0)};
+var previouslySeenStates = new HashSet<(int time, (int x, int y) pos)>();
+
+queue.Enqueue(start, distanceToGoal);
+
+while (queue.TryDequeue(out var state, out int prio))
+{
+    if (!previouslySeenStates.Add((state.time, state.key)))
+    {
+        continue;
+    }
+
+    if (state.key == goal)
+    {
+        Console.WriteLine(state.time);
+        if (!goalAlreadyVisited)
+        {
+            goalAlreadyVisited = true;
+            var temp = goal;
+            goal = start.key;
+            start = (temp, state.time);
+
+            queue.Clear();
+            previouslySeenStates.Clear();
+            queue.Enqueue(start, distanceToGoal);
+        }
+        else if (goalAlreadyVisited && state.key == (1, 0))
+        {
+            // head back to goal again
+            var temp = goal;
+            goal = start.key;
+            start = (temp, state.time);
+
+            queue.Clear();
+            previouslySeenStates.Clear();
+            queue.Enqueue(start, distanceToGoal);
+        }
+        else
+        {
+            return;
+        }
+        continue;
+    }
     
     // move me
     var pos = state.key;
+    map = maps[state.time + 1];
 
-    ICollection<(int x, int y)> moves = elfMoves.Select(e => (pos.x + e.x, pos.y + e.y)).Where(e => nextMapState.ContainsKey(e) && !nextMapState[e].Any()).ToArray();
+    ICollection<(int x, int y)> moves = elfMoves.Select(e => (pos.x + e.x, pos.y + e.y)).Where(e => map.ContainsKey(e) && !map[e].Any()).ToArray();
 
     foreach( var move in moves)
     {
         var dist = Math.Abs(goal.x - move.x) + Math.Abs(goal.y - move.y);
-        queue.Enqueue((move, state.time + 1, nextMapState), dist + state.time + 1);
+        queue.Enqueue((move, state.time + 1), dist + state.time + 1);
     }
 }
 
