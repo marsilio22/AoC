@@ -2,6 +2,7 @@ use std::fs;
 use std::collections::HashMap;
 
 fn main() {
+    day1();
     day2();
 }
 
@@ -44,13 +45,13 @@ fn day1() {
             let first = item.find(num).map_or(i32::MAX, |g| {i32::try_from(g).expect("parse first usize to int")});
             let last = item.rfind(num).map_or(-1, |g| {i32::try_from(g).expect("parse last usize to int")});
 
-            if (first < earliest_first)
+            if first < earliest_first
             {
                 earliest_first = first;
                 pair.0 = nums[num];
             }
 
-            if (last > latest_last)
+            if last > latest_last
             {
                 latest_last = last;
                 pair.1 = nums[num];
@@ -120,5 +121,5 @@ fn day2() {
     }
 
     println!("{}", total);
-    println!("{}", power_total); // 8160 too low, 8993 too low
+    println!("{}", power_total); 
 }
