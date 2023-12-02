@@ -1,5 +1,6 @@
 ﻿var lines = File.ReadAllLines("./input");
 
+Console.WriteLine(DateTime.Now);
 var elves = new HashSet<(int x, int y)>();
 var row = 0;
 foreach(var line in lines)
@@ -52,7 +53,7 @@ while (true)
 
         if (!elvesWhoCouldMove.Any())
         {
-            Console.WriteLine(round + 1);
+            Console.WriteLine($"{DateTime.Now}: {round + 1}");
             return;
         }
         
@@ -123,7 +124,7 @@ while (true)
 
         var ans = (maxX - minX + 1) * (maxY - minY + 1) - elves.Count;
 
-        Console.WriteLine(ans);
+        Console.WriteLine($"{DateTime.Now}: {ans}");
     }
 }
 

@@ -162,51 +162,6 @@ int Recurse2(IDictionary<string, Valve> valveMap, string currentMe, string curre
                 eleTarget = eleValve.Key;
             }
 
-            //if (new (int, int)[]
-            //        { (20, 23), (61, 22), (184, 19), (260, 18), (336, 17), (414, 16), (492, 15), (573, 14) }
-            //    .Contains((s, remaining)))
-            //{
-            //    Console.WriteLine();
-            //}
-
-            //if (new (int, int)[]
-            //        { (20, 22), (61, 21), (184, 18), (260, 17), (336, 16), (414, 15), (492, 14), (573, 13) }
-            //    .Contains((s, remaining)))
-            //{
-            //    Console.WriteLine();
-            //}
-
-            //if (new[]
-            //    {
-            //        //(23, 20),
-            //        //(22, 61),
-            //        //(21, 102),
-            //        //(20, 143),
-            //        //(19, 184),
-            //        //(18, 260),
-            //        (17, 336),
-            //        (16, 414),
-            //        (15, 492),
-            //        (14, 573),
-            //        (13, 654),
-            //        (12, 735),
-            //        (11, 816),
-            //        (10, 897),
-            //        (9, 978),
-            //        (8, 1059),
-            //        (7, 1140),
-            //        (6, 1221),
-            //        (5, 1302),
-            //        (4, 1383),
-            //        (3, 1464),
-            //        (2, 1545),
-            //        (1, 1626),
-            //        (0, 1707)
-            //    }.Contains((remaining, s)))
-            //{
-            //    Console.WriteLine();
-            //}
-
             best = Math.Max(Recurse2(newMap, mePos, elePos, meTarget, eleTarget, s, remaining), best);
         }
     }
@@ -219,75 +174,6 @@ int Recurse2(IDictionary<string, Valve> valveMap, string currentMe, string curre
 
     return best;
 }
-
-// var time = 0;
-// var currentLocation = "AA";
-
-// var ans = 0;
-
-// while (time < 30)
-// {
-//     var algLocation = currentLocation;
-//     Dictionary<string, (int distance, double worth, string firstStep)> worths = 
-//         valves.ToDictionary(v => v.Key, v => (int.MaxValue, 0d, string.Empty));
-//     var unvisited = valves.Keys.ToList();
-
-//     worths[algLocation] = 
-//     (   0,
-//         (valves[algLocation].Open) ? 
-//             0 : 
-//             valves[algLocation].Flow * (30 - (time + 1)), 
-//         string.Empty
-//     );
-
-//     while(unvisited.Any())
-//     {
-//         algLocation = worths.Where(w => unvisited.Contains(w.Key)).MinBy(w => w.Value.distance).Key;
-//         var currentWorth = worths[algLocation];
-
-//         foreach(var neighbour in valves[algLocation].Neighbours)
-//         {
-//             var val = worths[neighbour];
-
-//             if (val.distance > currentWorth.distance + 1)
-//             {
-//                 val = 
-//                 (
-//                     currentWorth.distance + 1, 
-//                     // punish distance a little more than we should so we don't try and go too too far away
-//                     valves[neighbour].Open ? 0 : ((double)valves[neighbour].Flow / (currentWorth.distance * punishment + 1)) * (30 - (time + currentWorth.distance + 2)), // +2 for the extra minute it takes to turn the valve
-//                     worths[algLocation].distance == 0 ? neighbour : worths[algLocation].firstStep
-//                 );
-
-//                 worths[neighbour] = val;
-//             }
-//         }
-
-//         unvisited.Remove(algLocation);
-//     }
-
-//     var best = worths.MaxBy(w => w.Value.worth);
-//     var best2 = worths.Where(w => w.Value.worth > 0).OrderBy(w => w.Value.distance).ThenByDescending(w => w.Value.worth).FirstOrDefault();
-//     var best3 = worths.OrderByDescending(w => w.Value.worth).Take(3).MaxBy(w => w.Value.distance);
-
-//     if (best.Value.distance + time < 30){
-//         Console.Write(best.Key + ", ");
-//         currentLocation = best.Key;
-//         time += best.Value.distance + 1;
-//         ans += (best.Value.distance + 1) * valves.Values.Where(v => v.Open).Sum(v => v.Flow);
-//         valves[currentLocation].Open = true;
-//     }
-//     else 
-//     {
-//         while (time < 30)
-//         {
-//             time++;
-//             ans +=  valves.Values.Where(v => v.Open).Sum(v => v.Flow);
-//         }
-//     }
-// }
-
-// Console.WriteLine(ans); // 1870 too high // 1768 too low // 1769 too low
 
 record Valve
 {
