@@ -4,6 +4,7 @@ use std::collections::HashMap;
 fn main() {
     day1();
     day2();
+    day3();
 }
 
 // todo move to mod
@@ -122,4 +123,66 @@ fn day2() {
 
     println!("{}", total);
     println!("{}", power_total); 
+}
+
+fn day3() {
+    let contents = fs::read_to_string("./inputs/day3").expect("Should have read the file");
+    let rows = contents.split("\n");
+
+    let mut map: HashMap<(i32, i32), (char, i32)> = HashMap::new();
+
+    let mut j = 0;
+    let mut i = 0;
+
+    let numeric_characters = ['1', '2', '3', '4','5','6','7','8','9','0'];
+
+    for row in rows {
+        i=0;
+        for character in row.chars() {
+            if character == '.' { i += 1; continue; }
+            
+            let to_insert = if numeric_characters.contains(&character) { -1 } else { 0 };
+
+            map.insert((i, j), (character, to_insert));
+            i += 1;
+        }
+
+        let mut numbers_for_row: Vec<i32> = Vec::<i32>::new();
+        for number in row.split(".")
+        {
+            if number == "" { continue }
+
+            if number.parse::<i32>().is_ok()
+            {
+                numbers_for_row.push(number.parse::<i32>().expect("should've been ok"));
+            }
+        }
+
+        let mut number_count = 0;
+
+        for mut p in 0..i {
+            if number_count >= numbers_for_row.len()
+            {
+                break;
+            }
+
+            if map.contains_key(&(p, j)) && map[&(p, j)].1 == -1 {
+                while map.contains_key(&(p, j)) {
+                    map.entry((p, j)).and_modify(|a| {(a.0, numbers_for_row[number_count]);});
+                    p+=1;
+                }
+                number_count += 1;
+            }
+        }
+
+
+        j += 1;
+    }
+    for thing in map {
+        if thing.0.1 == 0 {
+            println!("{:?}", thing);
+        }
+    }
+
+
 }
