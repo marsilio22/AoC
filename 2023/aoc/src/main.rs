@@ -4,7 +4,8 @@ use std::collections::HashMap;
 fn main() {
     day1();
     day2();
-    day3();
+    // day3();
+    day4();
 }
 
 // todo move to mod
@@ -184,5 +185,73 @@ fn day3() {
         }
     }
 
+
+}
+
+fn day4() {
+    let contents = fs::read_to_string("./inputs/day4").expect("Should have read the file");
+    let rows = contents.split("\n");
+    let mut total_score = 0;
+
+    let mut card_win_counts = HashMap::<i32, i32>::new();
+    let mut count = 1;
+
+    for row in rows {
+        let dump_first_bit = row.split(": ").last().expect("should've got last");
+        let mut winning_and_actual = dump_first_bit.split(" | ");
+
+        let winning = winning_and_actual.next().expect("should have first part");
+        let actual = winning_and_actual.next().expect("should have second part");
+
+        let winning_split = winning.split(" ").filter(|&x| !x.is_empty());
+        let actual_split = actual.split(" ").filter(|&x| !x.is_empty());
+
+        
+        let winning_split_vec: Vec<&str> = winning_split.collect();
+        let actual_vec: Vec<&str> = actual_split.collect();
+
+        let mut score = 0;
+
+        let mut win_count = 0;
+
+        for winner in winning_split_vec {
+            if actual_vec.contains(&winner)
+            {
+                win_count += 1;
+                score = if score == 0 { 1 } else { score * 2 };
+            }
+        }
+
+        total_score += score;
+        card_win_counts.insert(count, win_count);
+        count += 1;
+    }
+
+    let mut card_counts = HashMap::<&i32, i32>::new();
+    let mut card_counts2 = vec![188; 1];
+    
+
+    for win in card_win_counts.iter() {
+        card_counts.insert(win.0, 1);
+        card_counts2.get((win.0 - 1) as usize).expect("") += 9
+
+    }
+
+
+
+    // for card in card_counts {
+    //     if card.1 > 0 {
+    //         let card_wins = card_win_counts[&card.0].into();
+
+    //         for i in 1..card_wins {
+    //             let key = card.0 + i;
+    //             card_counts.get_mut(&key).unwrap() += card_wins * card.0;
+    //         }
+    //     }
+    // }
+
+
+
+    println!("{}", total_score);
 
 }
