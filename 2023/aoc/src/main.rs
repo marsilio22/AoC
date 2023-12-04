@@ -4,7 +4,7 @@ use std::collections::HashMap;
 fn main() {
     day1();
     day2();
-    // day3();
+    day3();
     day4();
 }
 
@@ -193,7 +193,7 @@ fn day4() {
     let rows = contents.split("\n");
     let mut total_score = 0;
 
-    let mut card_win_counts = HashMap::<i32, i32>::new();
+    let mut card_win_counts = HashMap::<i32, (i32, i32)>::new(); // tuple = (wins, count)
     let mut count = 1;
 
     for row in rows {
@@ -205,13 +205,11 @@ fn day4() {
 
         let winning_split = winning.split(" ").filter(|&x| !x.is_empty());
         let actual_split = actual.split(" ").filter(|&x| !x.is_empty());
-
         
         let winning_split_vec: Vec<&str> = winning_split.collect();
         let actual_vec: Vec<&str> = actual_split.collect();
 
         let mut score = 0;
-
         let mut win_count = 0;
 
         for winner in winning_split_vec {
@@ -223,35 +221,29 @@ fn day4() {
         }
 
         total_score += score;
-        card_win_counts.insert(count, win_count);
+        card_win_counts.insert(count, (win_count, 1));
         count += 1;
     }
 
-    let mut card_counts = HashMap::<&i32, i32>::new();
-    let mut card_counts2 = vec![188; 1];
-    
+    let mut total_cards = 0;
 
-    for win in card_win_counts.iter() {
-        card_counts.insert(win.0, 1);
-        card_counts2.get((win.0 - 1) as usize).expect("") += 9
-
+    for i in 1..189 {
+        if card_win_counts[&i].0 > 0 // wins > 0
+        {
+            let to_add = card_win_counts[&i].1;
+            
+            for j in 1..card_win_counts[&i].0 + 1 {
+                *card_win_counts.get_mut(&(i+j)).unwrap() = (card_win_counts[&(i+j)].0, card_win_counts[&(i+j)].1 + to_add);
+            }
+        }
     }
 
-
-
-    // for card in card_counts {
-    //     if card.1 > 0 {
-    //         let card_wins = card_win_counts[&card.0].into();
-
-    //         for i in 1..card_wins {
-    //             let key = card.0 + i;
-    //             card_counts.get_mut(&key).unwrap() += card_wins * card.0;
-    //         }
-    //     }
-    // }
-
-
+    
+    for card in card_win_counts.iter() {
+        total_cards += card.1.1;
+    }
 
     println!("{}", total_score);
+    println!("{}", total_cards);
 
 }
