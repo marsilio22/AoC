@@ -2,10 +2,11 @@ use std::fs;
 use std::collections::HashMap;
 
 fn main() {
-    day1();
-    day2();
-    day3();
-    day4();
+    // day1();
+    // day2();
+    // day3();
+    // day4();
+    day5();
 }
 
 // todo move to mod
@@ -245,5 +246,59 @@ fn day4() {
 
     println!("{}", total_score);
     println!("{}", total_cards);
+
+}
+
+
+fn day5() {
+    let contents = fs::read_to_string("./inputs/day5").expect("Should have read the file");
+    let mut rows = contents.split("\n");
+
+    let mut seeds: Vec<i64> = rows.next().expect("should be ok")
+        .split(": ").last().expect("should still be ok")
+        .split(" ").map(|x| x.parse::<i64>().expect("should have i64s")).collect();
+
+    let mut seed_to_soil = Vec::<(i64, i64, i64)>::new();
+
+    rows.next();
+    rows.next(); // skip past the first title;
+
+    loop {
+        let nums = match rows.next() {
+            Some(a) => a,
+            None => break,
+        };
+
+        if nums.is_empty()// || nums.contains(":")
+        {
+            let seeds_copy = seeds.clone();
+            
+            // map the seeds now
+            let mut cnt = 0;
+
+            for seed in seeds_copy {
+                for dest_src_len in seed_to_soil.iter() {
+                    if seed > dest_src_len.1 && seed < dest_src_len.1 + dest_src_len.2 {
+                        let new_val = seed - dest_src_len.1 + dest_src_len.0;
+                        seeds[cnt] = new_val;
+                    }
+                }
+                cnt += 1;
+            }
+
+            // clear the vec?
+            seed_to_soil.clear();
+
+            // skip the next title
+            rows.next();
+        }
+        else
+        {
+            let ints:Vec<i64> = nums.split(" ").map(|x| x.parse::<i64>().expect("second time should have i64s")).collect();
+            seed_to_soil.push((ints[0], ints[1], ints[2]));
+        }
+    }
+
+    println!("{:?}", seeds);
 
 }
