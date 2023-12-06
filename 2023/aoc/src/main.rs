@@ -1,12 +1,14 @@
 use std::fs;
 use std::collections::HashMap;
+use std::cmp::Ord;
 
 fn main() {
     // day1();
     // day2();
     // day3();
     // day4();
-    day5();
+    // day5();
+    day6();
 }
 
 // todo move to mod
@@ -301,4 +303,56 @@ fn day5() {
 
     println!("{:?}", seeds);
 
+}
+
+fn day6() {
+    // let inputs = [(7, 9), (15, 40), (30, 200)];
+    // let inputs = [(52, 426), (94, 1374), (75, 1279), (94, 1216)];
+    let inputs: [(i64, i64); 1] = [(52947594, 426137412791216)];
+    let mut res = 1;
+
+    for input in inputs {
+        let mut min = input.0 / 2; // by observation, holding the button for this time is always a win
+        let mut max = input.0 / 2;
+
+        let mut jump_size = min/2;
+
+        loop {
+            let test = (input.0 - (min - jump_size)) * (min - jump_size);
+
+            if test > input.1 {
+                min = min - jump_size;
+                jump_size = min / 2;
+            }
+            else {
+                jump_size /= 2
+            }
+
+            if jump_size == 0 {
+                break;
+            }
+        }
+
+        // find the most amount of time to win
+        loop {
+            let test = (input.0 - (max + jump_size)) * (max + jump_size);
+
+            if test > input.1 {
+                max = max + jump_size;
+                jump_size = input.0 - (jump_size / 2);
+            }
+            else {
+                jump_size /= 2
+            }
+
+            if jump_size == 0 { // we must have tried jump_size == 1, and divided it by a huge number so that it's now 0, so this answer is correct
+                break;
+            }
+        }
+
+        println!("{}: {}", input.0, max - min + 1); // +1 because it's inclusive 
+        res *= max - min + 1;
+    }
+
+    println!("{}", res);
 }
