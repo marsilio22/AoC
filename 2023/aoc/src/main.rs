@@ -8,7 +8,8 @@ fn main() {
     // day3();
     // day4();
     // day5();
-    day6();
+    day5_2();
+    // day6();
 }
 
 // todo move to mod
@@ -260,7 +261,7 @@ fn day5() {
         .split(": ").last().expect("should still be ok")
         .split(" ").map(|x| x.parse::<i64>().expect("should have i64s")).collect();
 
-    let mut seed_to_soil = Vec::<(i64, i64, i64)>::new();
+    let mut mappings = Vec::<(i64, i64, i64)>::new();
 
     rows.next();
     rows.next(); // skip past the first title;
@@ -271,7 +272,7 @@ fn day5() {
             None => break,
         };
 
-        if nums.is_empty()// || nums.contains(":")
+        if nums.is_empty()
         {
             let seeds_copy = seeds.clone();
             
@@ -279,7 +280,7 @@ fn day5() {
             let mut cnt = 0;
 
             for seed in seeds_copy {
-                for dest_src_len in seed_to_soil.iter() {
+                for dest_src_len in mappings.iter() {
                     if seed > dest_src_len.1 && seed < dest_src_len.1 + dest_src_len.2 {
                         let new_val = seed - dest_src_len.1 + dest_src_len.0;
                         seeds[cnt] = new_val;
@@ -289,7 +290,7 @@ fn day5() {
             }
 
             // clear the vec?
-            seed_to_soil.clear();
+            mappings.clear();
 
             // skip the next title
             rows.next();
@@ -297,12 +298,121 @@ fn day5() {
         else
         {
             let ints:Vec<i64> = nums.split(" ").map(|x| x.parse::<i64>().expect("second time should have i64s")).collect();
-            seed_to_soil.push((ints[0], ints[1], ints[2]));
+            mappings.push((ints[0], ints[1], ints[2]));
         }
     }
-
+    seeds.sort();
     println!("{:?}", seeds);
+}
 
+fn day5_2()
+{
+    let contents = fs::read_to_string("./inputs/day5").expect("Should have read the file");
+    let mut rows = contents.split("\n");
+
+    let seeds_input: Vec<i64> = rows.next().expect("should be ok")
+        .split(": ").last().expect("should still be ok")
+        .split(" ").map(|x| x.parse::<i64>().expect("should have i64s")).collect();
+
+    let mut seeds: Vec<(i64, i64)> = Vec::<(i64, i64)>::new();
+
+    for i in 0..seeds_input.len()/2 {
+        seeds.push((seeds_input[2*i], seeds_input[2*i] + seeds_input[2*i+1]));
+    }
+
+    rows.next();
+    rows.next(); // skip past the first title;
+
+    let mut loop_seeds = Vec::<(i64, i64)>::new();
+
+    loop {
+
+        println!("seeds {:?} & loop_seeds {:?}", seeds, loop_seeds);
+
+
+        let nums = match rows.next() {
+            Some(a) => a,
+            None => break
+        };
+
+        println!("nums {:?}", nums);
+
+        if nums.is_empty() {
+            // replace seeds array proper for the next loop
+
+            seeds.retain(|x| {x.0 != -1});
+
+            // println!("loop {:?}", loop_seeds);
+
+            for seed in loop_seeds.clone().iter() {
+                seeds.push(*seed);
+            }
+            rows.next();
+            loop_seeds.clear();
+        }
+        else {
+            // cases
+
+            //    -------- DSL
+            //      ---    seed
+
+            //    -------- DSL
+            //         ------ seed
+
+            //    -------- DSL
+            //  -----        seed
+            
+            //    -------- DSL
+            //   -------------  seed
+
+            let dest_src_len:Vec<i64> = nums.split(" ").map(|x| x.parse::<i64>().expect("second time should have i64s")).collect();
+            let mut unmapped_seeds: Vec<(i64, i64)> = Vec::<(i64, i64)>::new();
+
+            for seed in seeds.iter_mut() {
+                // mapping range completely covers seeds (map directly range for range)
+                if seed.0 > dest_src_len[1] && seed.1 < dest_src_len[1] + dest_src_len[2] {
+                    loop_seeds.push((seed.0 - dest_src_len[1] + dest_src_len[0], seed.1 - dest_src_len[1] + dest_src_len[0]));
+                    *seed = (-1, -1);
+                }
+
+                // mapping covers bottom end of seeds (split into two)
+                if seed.0 > dest_src_len[1] && seed.0 < dest_src_len[1] + dest_src_len[2] && seed.1 > dest_src_len[1] + dest_src_len[2] {
+                    loop_seeds.push((seed.0 - dest_src_len[1] + dest_src_len[0], dest_src_len[0] + dest_src_len[2]));
+                    *seed = (dest_src_len[1] + dest_src_len[2], seed.1); 
+                }
+
+                // mapping covers top end of seeds (split into two)
+                if seed.0 < dest_src_len[1] && seed.1 > dest_src_len[1] && seed.1 < dest_src_len[1] + dest_src_len[2] {
+                    loop_seeds.push((dest_src_len[0], dest_src_len[0] + seed.1 - dest_src_len[1]));
+                    *seed = (seed.0, dest_src_len[1] - 1) // questionable minus one here
+                }
+
+                // seeds cover mapping range entirely (split into three)
+                if seed.0 < dest_src_len[1] && seed.1 > dest_src_len[1] + dest_src_len[2] {
+                    loop_seeds.push((seed.0 - dest_src_len[1] + dest_src_len[0], seed.1 - dest_src_len[1] + dest_src_len[0]));
+                    *seed = (seed.0, dest_src_len[1] - 1);// lower bit
+                    unmapped_seeds.push((dest_src_len[1] + dest_src_len[2] + 1, seed.1));// upper bit // dubious +1
+                }
+            }
+
+            // rejoin the things together
+            for thing in unmapped_seeds {
+                seeds.push(thing);
+            }
+
+            // println!("{:?}, {:?}", loop_seeds.clone(), seeds);
+        }
+
+    }
+
+    let mut min = i64::MAX;
+    for seed in seeds.iter() {
+        if seed.0 < min { min = seed.0 }
+    }
+
+    // println!("{:?}", loop_seeds);
+
+    println!("{:?}", min); // 144724436 too high
 }
 
 fn day6() {
