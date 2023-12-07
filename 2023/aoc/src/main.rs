@@ -370,19 +370,19 @@ fn day5_2()
 
             for seed in seeds.iter_mut() {
                 // mapping range completely covers seeds (map directly range for range)
-                if seed.0 > dest_src_len[1] && seed.1 < dest_src_len[1] + dest_src_len[2] {
+                if seed.0 >= dest_src_len[1] && seed.1 <= dest_src_len[1] + dest_src_len[2] {
                     loop_seeds.push((seed.0 - dest_src_len[1] + dest_src_len[0], seed.1 - dest_src_len[1] + dest_src_len[0]));
                     *seed = (-1, -1);
                 }
 
                 // mapping covers bottom end of seeds (split into two)
-                if seed.0 > dest_src_len[1] && seed.0 < dest_src_len[1] + dest_src_len[2] && seed.1 > dest_src_len[1] + dest_src_len[2] {
+                if seed.0 >= dest_src_len[1] && seed.0 <= dest_src_len[1] + dest_src_len[2] && seed.1 >= dest_src_len[1] + dest_src_len[2] {
                     loop_seeds.push((seed.0 - dest_src_len[1] + dest_src_len[0], dest_src_len[0] + dest_src_len[2] - 1));
                     *seed = (dest_src_len[1] + dest_src_len[2], seed.1);
                 }
 
                 // mapping covers top end of seeds (split into two)
-                if seed.0 < dest_src_len[1] && seed.1 > dest_src_len[1] && seed.1 < dest_src_len[1] + dest_src_len[2] {
+                if seed.0 < dest_src_len[1] && seed.1 >= dest_src_len[1] && seed.1 <= dest_src_len[1] + dest_src_len[2] {
                     loop_seeds.push((dest_src_len[0], dest_src_len[0] + seed.1 - dest_src_len[1]));
                     *seed = (seed.0, dest_src_len[1] - 1) // questionable minus one here
                 }
