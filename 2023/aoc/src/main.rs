@@ -8,9 +8,9 @@ fn main() {
     // day3();
     // day4();
     // day5();
-    // day5_2();
+    day5_2();
     // day6();
-    day7();
+    // day7();
 }
 
 // todo move to mod
@@ -318,7 +318,7 @@ fn day5_2()
     let mut seeds: Vec<(i64, i64)> = Vec::<(i64, i64)>::new();
 
     for i in 0..seeds_input.len()/2 {
-        seeds.push((seeds_input[2*i], seeds_input[2*i] + seeds_input[2*i+1]));
+        seeds.push((seeds_input[2*i], seeds_input[2*i] + seeds_input[2*i+1] - 1));
     }
 
     rows.next();
@@ -329,7 +329,6 @@ fn day5_2()
     loop {
 
         println!("seeds {:?} & loop_seeds {:?}", seeds, loop_seeds);
-
 
         let nums = match rows.next() {
             Some(a) => a,
@@ -378,8 +377,8 @@ fn day5_2()
 
                 // mapping covers bottom end of seeds (split into two)
                 if seed.0 > dest_src_len[1] && seed.0 < dest_src_len[1] + dest_src_len[2] && seed.1 > dest_src_len[1] + dest_src_len[2] {
-                    loop_seeds.push((seed.0 - dest_src_len[1] + dest_src_len[0], dest_src_len[0] + dest_src_len[2]));
-                    *seed = (dest_src_len[1] + dest_src_len[2], seed.1); 
+                    loop_seeds.push((seed.0 - dest_src_len[1] + dest_src_len[0], dest_src_len[0] + dest_src_len[2] - 1));
+                    *seed = (dest_src_len[1] + dest_src_len[2], seed.1);
                 }
 
                 // mapping covers top end of seeds (split into two)
@@ -390,7 +389,7 @@ fn day5_2()
 
                 // seeds cover mapping range entirely (split into three)
                 if seed.0 < dest_src_len[1] && seed.1 > dest_src_len[1] + dest_src_len[2] {
-                    loop_seeds.push((seed.0 - dest_src_len[1] + dest_src_len[0], seed.1 - dest_src_len[1] + dest_src_len[0]));
+                    loop_seeds.push((dest_src_len[0], dest_src_len[0] + dest_src_len[2]));
                     *seed = (seed.0, dest_src_len[1] - 1);// lower bit
                     unmapped_seeds.push((dest_src_len[1] + dest_src_len[2] + 1, seed.1));// upper bit // dubious +1
                 }
@@ -403,17 +402,25 @@ fn day5_2()
 
             // println!("{:?}, {:?}", loop_seeds.clone(), seeds);
         }
+    }
 
+    // one final merge of seeds and loop seeds
+    seeds.retain(|x| {x.0 != -1});
+    for seed in loop_seeds.clone().iter() {
+        seeds.push(*seed);
     }
 
     let mut min = i64::MAX;
+
+    println!("{:?}", seeds);
+
     for seed in seeds.iter() {
-        if seed.0 < min { min = seed.0 }
+        if seed.0 != -1 && seed.0 < min { min = seed.0 }
     }
 
-    // println!("{:?}", loop_seeds);
-
     println!("{:?}", min); // 144724436 too high
+                           // 117979283 too high
+                           // 
 }
 
 fn day6() {
