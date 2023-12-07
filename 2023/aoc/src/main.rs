@@ -1,6 +1,6 @@
 use std::fs;
 use std::collections::HashMap;
-use std::cmp::Ord;
+use std::cmp::{Ord, Ordering};
 
 fn main() {
     // day1();
@@ -8,8 +8,9 @@ fn main() {
     // day3();
     // day4();
     // day5();
-    day5_2();
+    // day5_2();
     // day6();
+    day7();
 }
 
 // todo move to mod
@@ -465,4 +466,119 @@ fn day6() {
     }
 
     println!("{}", res);
+}
+
+fn day7() {
+    let contents = fs::read_to_string("./inputs/day7").expect("Should have read the file");
+    let mut rows = contents.split("\n");
+
+    let mut hands = rows.map(|x| { 
+        let mut y = x.split(" ");
+        return (y.next().expect("should have next1"), y.next().expect("should have next2").parse::<i32>().expect("should've parsed"))
+    }).collect::<Vec<(&str, i32)>>();
+
+    let cards = vec!['A', 'K', 'Q', 'J', 'T', '9', '8', '7', '6', '5', '4', '3', '2'];
+
+    hands.sort_by(|a, b| {
+        let first = a.0;
+        let second = b.0;
+
+        let mut counts_first = HashMap::<char, i32>::new();
+        let mut counts_second = HashMap::<char, i32>::new();
+
+        for card in cards.iter() {
+            let mut count_first = 0;
+            for c in first.chars() {
+                if c == *card {
+                    count_first += 1;
+                }
+            }
+
+            counts_first.insert(*card, count_first);
+            
+            let mut count_second = 0;
+            for c in second.chars() {
+                if c == *card {
+                    count_second += 1;
+                }
+            }
+
+            counts_second.insert(*card, count_second);
+        }
+
+        // compare on card counts
+        let first_max = counts_first.values().max().expect("");
+        let first_min = counts_first.values().min().expect("");
+        let second_max = counts_second.values().max().expect("");
+        let second_min = counts_second.values().min().expect("");
+
+        if first_max > second_max {
+            return std::cmp::Ordering::Greater;
+        }
+        
+        if first_max < second_max {
+            return std::cmp::Ordering::Less;
+        }
+
+        // full houses and two pairs need sorting before we look at card ordering
+        if first_max == &3 {
+            // we might have 3, 1, 1 or 3, 2
+            if first_min == &2 && 
+                second_min == &1 {
+                return Ordering::Less;
+            }
+
+            if first_min == &1 &&
+                second_min == &2 {
+                return Ordering::Greater;
+            }
+        }
+
+        if first_max == &2 {
+            // might have 2, 1, 1, 1 or 2, 2, 1
+            if counts_first.values().filter(|x| { x != &&0}).count() == 3 && counts_second.values().filter(|x| { x != &&0 }).count() == 4 {
+                return Ordering::Greater;
+            }
+            
+            if counts_second.values().filter(|x| { x != &&0}).count() == 3 && counts_first.values().filter(|x| { x != &&0 }).count() == 4 {
+                return Ordering::Less;
+            }
+        }
+
+
+        let mut first_iter = first.chars();
+        let mut second_iter = second.chars();
+
+        loop {
+            let next_1 = first_iter.next().expect("should break before this is none");
+            let next_2 = second_iter.next().expect("should break before this is none      2");
+
+            if next_1 == next_2 {
+                continue;
+            }
+
+            for card in cards.iter() {
+                if next_1 == *card {
+                    return Ordering::Greater;
+                }
+
+                if next_2 == *card {
+                    return Ordering::Less;
+                }
+            }        
+        }
+    });
+
+    let mut total = 0;
+    let mut count = 1;
+
+    for hand in hands.iter() {
+        total += count * hand.1;
+        count += 1;
+    }
+
+    println!("{:?}", hands);
+
+    println!("{}", total); // 246159939 too low
+                           // 246736994 too high
 }
