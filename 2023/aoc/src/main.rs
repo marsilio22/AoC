@@ -13,7 +13,8 @@ fn main() {
     // day6();
     // day7();
     // day8();
-    day9();
+    // day9();
+    day10();
 }
 
 // todo move to mod
@@ -921,5 +922,106 @@ fn day9() {
     }
 
     println!("{}", total_last);
-    println!("{}", total_first); // 20616 too high
+    println!("{}", total_first); 
+}
+
+fn day10() {
+    let contents = fs::read_to_string("./inputs/day10").expect("Should have read the file");
+    let rows = contents.lines();
+
+    let mut map = HashMap::<(i32, i32), char>::new();
+
+    for (j, r) in rows.enumerate() {
+        for (i, c) in r.chars().enumerate() {
+            map.insert((i.try_into().unwrap(), j.try_into().unwrap()), c);
+        }
+    }
+
+    let clone = map.clone();
+    let start = clone.iter().filter(|x| x.1 == &'S').collect::<Vec<(&(i32, i32),&char)>>()[0].0;
+
+    let mut current = *start;
+    let mut last = *start;
+
+    let mut length = 0;
+
+    // by observation, S is an F, todo put this in code using the below...
+    let mut curr_pipe = 'F';
+
+    // let valid_north_chars = ['F', '|', '7'];
+    // let valid_east_chars = ['J', '-', '7'];
+    // let valid_south_chars = ['J', '|', 'L'];
+    // let valid_west_chars = ['F', '-', 'L'];
+
+    // if valid_east_chars.contains(&map[&dirs[0]]) && dirs[0] != last {
+    //     last = current;
+    //     current = dirs[0];
+    // }
+    // else if valid_west_chars.contains(&map[&dirs[1]]) && dirs[1] != last {
+    //     last = current;
+    //     current = dirs[1];
+    // }
+    // else if valid_south_chars.contains(&map[&dirs[2]]) && dirs[2] != last {
+    //     last = current;
+    //     current = dirs[2];
+    // }
+    // else if valid_north_chars.contains(&map[&dirs[3]]) && dirs[3] != last {
+    //     last = current;
+    //     current = dirs[3];
+    // }
+
+    let mut whole_loop = HashMap::<(i32, i32), char>::new();
+    
+    loop {
+        let dirs = vec![
+            (current.0 + 1, current.1), //East
+            (current.0 - 1, current.1), //West
+            (current.0, current.1 + 1), //South
+            (current.0, current.1 - 1)  //North
+        ];
+
+        let valid_dirs = match curr_pipe {
+            '|' => [dirs[2], dirs[3]],
+            '-' => [dirs[0], dirs[1]],
+            'L' => [dirs[0], dirs[3]],
+            'J' => [dirs[1], dirs[3]],
+            '7' => [dirs[1], dirs[2]],
+            'F' => [dirs[0], dirs[2]],
+            'S' => break,
+            _ => panic!("oh noes")
+        };
+
+        let next = valid_dirs.iter().filter(|x| x != &&last).next().unwrap();
+
+        last = current;
+        current = *next;
+        curr_pipe = map[&current];
+        whole_loop.insert(current, curr_pipe);
+        // if current == *start {
+        //     break;
+        // }
+        length += 1;
+    }
+
+    println!("{}", length/2);
+
+    for j in 0..140 {
+        for i in 0..140 {
+            if whole_loop.contains_key(&(i, j)) {
+                print!("{}", whole_loop[&(i, j)])
+                // print!(" ")
+            }
+            else {
+                print!(" ");
+            }
+        }
+        println!();
+    }
+
+    // visually confirm directions
+    // for dir in dirs { 
+    //     println!("{:?}", map[&dir])
+    // }
+
+
 }
