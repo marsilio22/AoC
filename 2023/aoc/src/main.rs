@@ -973,20 +973,19 @@ fn day10() {
     let mut whole_loop = HashMap::<(i32, i32), char>::new();
     
     loop {
-        let dirs = vec![
-            (current.0 + 1, current.1), //East
-            (current.0 - 1, current.1), //West
-            (current.0, current.1 + 1), //South
-            (current.0, current.1 - 1)  //North
-        ];
+        let east = (current.0 + 1, current.1); //East
+        let west = (current.0 - 1, current.1); //West
+        let south = (current.0, current.1 + 1); //South
+        let north = (current.0, current.1 - 1); //North
+        
 
         let valid_dirs = match curr_pipe {
-            '|' => [dirs[2], dirs[3]],
-            '-' => [dirs[0], dirs[1]],
-            'L' => [dirs[0], dirs[3]],
-            'J' => [dirs[1], dirs[3]],
-            '7' => [dirs[1], dirs[2]],
-            'F' => [dirs[0], dirs[2]],
+            '|' => [south, north],
+            '-' => [east, west],
+            'L' => [east, north],
+            'J' => [west, north],
+            '7' => [west, south],
+            'F' => [east, south],
             'S' => break,
             _ => panic!("oh noes")
         };
@@ -994,12 +993,56 @@ fn day10() {
         let next = valid_dirs.iter().filter(|x| x != &&last).next().unwrap();
 
         last = current;
+
+        let mut inside = (0, 0);
+        let mut outside = (0, 0);
+        let mut to_insert = '.';
+
+        if *next == east {
+            to_insert = '>';
+            // north is INSIDE
+            inside = (next.0, next.1 - 1);
+            // south is OUTSIDE;
+            outside = (next.0, next.1 + 1);
+        }
+        if *next == west {
+            to_insert = '<';
+            // north is OUTSIDE
+            outside = (next.0, next.1 - 1);
+            // south is INSIDE
+            inside = (next.0, next.1 + 1);
+        }
+        if *next == north {
+            to_insert = '^';
+            // east is OUTSIDE
+            outside = (next.0 + 1, next.1);
+            // west is INSIDE
+            inside = (next.0 - 1, next.1);
+        }
+        if *next == south {
+            to_insert = 'v';
+            // east is INSIDE
+            inside = (next.0 + 1, next.1);
+            // west is OUTSIDE
+            outside = (next.0 - 1, next.1);
+        }
+
+        // wtf have I done wrong here
+        // let to_insert: char = match *next {
+        //     east => '>',
+        //     west => '<',
+        //     south => 'v',
+        //     north => '^',
+        //     _ => panic!("should've been ONE of those...")
+        // };
+
+        whole_loop.insert(current, to_insert);
+        if map.contains_key(&inside) && map[&inside] == '.' { whole_loop.insert(inside, 'I'); }
+        if map.contains_key(&outside) && map[&outside] == '.' { whole_loop.insert(outside, 'O'); }
+
         current = *next;
         curr_pipe = map[&current];
-        whole_loop.insert(current, curr_pipe);
-        // if current == *start {
-        //     break;
-        // }
+
         length += 1;
     }
 
@@ -1008,20 +1051,18 @@ fn day10() {
     for j in 0..140 {
         for i in 0..140 {
             if whole_loop.contains_key(&(i, j)) {
-                print!("{}", whole_loop[&(i, j)])
+                if map[&(i, j)] == 'S' { print!("S")}
+                else{print!("{}", whole_loop[&(i, j)])}
                 // print!(" ")
             }
-            else {
-                print!(" ");
+            else if map[&(i, j)] == '.'{
+                print!("X");
             }
+            else { print!(" ")}
         }
         println!();
     }
 
-    // visually confirm directions
-    // for dir in dirs { 
-    //     println!("{:?}", map[&dir])
-    // }
 
 
 }
