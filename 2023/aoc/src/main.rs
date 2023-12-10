@@ -1,6 +1,7 @@
 use std::fs;
 use std::collections::HashMap;
-use std::cmp::{Ord, Ordering};
+use std::cmp::Ordering;
+use num::integer::lcm;
 
 fn main() {
     // day1();
@@ -8,15 +9,17 @@ fn main() {
     // day3();
     // day4();
     // day5();
-    day5_2();
+    // day5_2();
     // day6();
     // day7();
+    // day8();
+    day9();
 }
 
 // todo move to mod
 fn day1() {
     let contents = fs::read_to_string("./inputs/day1").expect("Should have read the file");
-    let list = contents.split("\n");
+    let list = contents.lines();
 
     let nums = HashMap::from([
         ("1", "1"),
@@ -80,7 +83,7 @@ fn day1() {
 
 fn day2() {
     let contents = fs::read_to_string("./inputs/day2").expect("Should have read the file");
-    let input = contents.split("\n");
+    let input = contents.lines();
 
     let mut game = 1;
     let mut total = 0;
@@ -133,7 +136,7 @@ fn day2() {
 
 fn day3() {
     let contents = fs::read_to_string("./inputs/day3").expect("Should have read the file");
-    let rows = contents.split("\n");
+    let rows = contents.lines();
 
     let mut map: HashMap<(i32, i32), (char, i32)> = HashMap::new();
 
@@ -181,7 +184,6 @@ fn day3() {
             }
         }
 
-
         j += 1;
     }
     for thing in map {
@@ -195,7 +197,7 @@ fn day3() {
 
 fn day4() {
     let contents = fs::read_to_string("./inputs/day4").expect("Should have read the file");
-    let rows = contents.split("\n");
+    let rows = contents.lines();
     let mut total_score = 0;
 
     let mut card_win_counts = HashMap::<i32, (i32, i32)>::new(); // tuple = (wins, count)
@@ -256,7 +258,7 @@ fn day4() {
 
 fn day5() {
     let contents = fs::read_to_string("./inputs/day5").expect("Should have read the file");
-    let mut rows = contents.split("\n");
+    let mut rows = contents.lines();
 
     let mut seeds: Vec<i64> = rows.next().expect("should be ok")
         .split(": ").last().expect("should still be ok")
@@ -302,14 +304,15 @@ fn day5() {
             mappings.push((ints[0], ints[1], ints[2]));
         }
     }
+
     seeds.sort();
-    println!("{:?}", seeds);
+    println!("{:?}", seeds[0]);
 }
 
 fn day5_2()
 {
     let contents = fs::read_to_string("./inputs/day5").expect("Should have read the file");
-    let mut rows = contents.split("\n");
+    let mut rows = contents.lines();
 
     let seeds_input: Vec<i64> = rows.next().expect("should be ok")
         .split(": ").last().expect("should still be ok")
@@ -328,14 +331,14 @@ fn day5_2()
 
     loop {
 
-        println!("seeds {:?} & loop_seeds {:?}", seeds, loop_seeds);
+        // println!("seeds {:?} & loop_seeds {:?}", seeds, loop_seeds);
 
         let nums = match rows.next() {
             Some(a) => a,
             None => break
         };
 
-        println!("nums {:?}", nums);
+        // println!("nums {:?}", nums);
 
         if nums.is_empty() {
             // replace seeds array proper for the next loop
@@ -412,7 +415,7 @@ fn day5_2()
 
     let mut min = i64::MAX;
 
-    println!("{:?}", seeds);
+    // println!("{:?}", seeds);
 
     for seed in seeds.iter() {
         if seed.0 != -1 && seed.0 < min { min = seed.0 }
@@ -468,7 +471,7 @@ fn day6() {
             }
         }
 
-        println!("{}: {}", input.0, max - min + 1); // +1 because it's inclusive 
+        // println!("{}: {}", input.0, max - min + 1); // +1 because it's inclusive 
         res *= max - min + 1;
     }
 
@@ -477,7 +480,7 @@ fn day6() {
 
 fn day7() {
     let contents = fs::read_to_string("./inputs/day7").expect("Should have read the file");
-    let rows = contents.split("\n");
+    let rows = contents.lines();
 
     let mut hands = rows.map(|x| { 
         let mut y = x.split(" ");
@@ -767,4 +770,156 @@ fn day7() {
 
     println!("{}", total); // 246903088 too low
                            // 252393769 too high -- should've deleted my test code that meant this was wrong
+}
+
+fn day8() {
+    let contents = fs::read_to_string("./inputs/day8").expect("Should have read the file");
+    let mut rows = contents.lines();
+
+    let instr = rows.next().expect("yeah yeah");
+
+    // skip blank
+    rows.next();
+
+    let mut map = HashMap::<&str, (String, String)>::new();
+
+    // parse nodes
+    loop {
+        let next = match rows.next()
+        {
+            Some(a) => a,
+            None => break
+        };
+
+        let mut split = next.split(" = ");
+
+        let key = split.next().expect("should have 2 parts");
+        let val = split.next().expect("should have 2 parts - 2");
+
+        let replaced = val.replace(&['(', ')'][..], "");
+
+        let split2: Vec<&str> = replaced.split(", ").collect::<Vec<&str>>();
+        let tuple_value = (String::from(split2[0]), String::from(split2[1]));
+
+        map.insert(key, tuple_value);
+    }
+
+    let mut curr = "AAA"; // p1
+
+    let mut count = 0;
+
+    loop {
+        let mut instr_c = instr.chars();
+
+        while curr != "ZZZ" {
+            let next = instr_c.next();
+
+            curr = match next {
+                Some('L') => &map[curr].0,
+                Some('R') => &map[curr].1,
+                None => break,
+                Some(_) => panic!("oh no!")
+            };
+
+            count += 1;
+        }
+
+        if curr == "ZZZ" {break;}
+    }
+    println!("{}", count);
+
+    // p2
+    
+    let mut currents = map.keys().filter(|x| x.ends_with("A"));
+
+    let mut counts = Vec::<i64>::new();
+
+    for current in currents {
+        let mut curr = *current;
+        count = 0;
+
+        loop {
+            let mut instr_c = instr.chars();
+
+            while !current.ends_with("Z") {
+                let next = instr_c.next();
+
+                curr = match next {
+                    Some('L') => &map[curr].0,
+                    Some('R') => &map[curr].1,
+                    None => break,
+                    Some(_) => panic!("oh no!")
+                };
+
+                count += 1;
+            }
+
+            if curr.ends_with("Z"){break;}
+        }
+
+        counts.push(count);
+    }
+
+    let mut least_common_multiple: i64 = 1;
+
+    for count in counts {
+        least_common_multiple = lcm(least_common_multiple, count);
+    }
+
+    println!("{}", least_common_multiple);
+}
+
+fn day9() {
+    let contents = fs::read_to_string("./inputs/day9").expect("Should have read the file");
+    let rows = contents.lines().map(|r| r.split(" ").map(|n| n.parse::<i64>().expect("should parse")));
+
+    let mut total_last = 0;
+    let mut total_first = 0;
+    for row in rows {
+        let readings = row.collect::<Vec<i64>>();
+
+        let mut map = HashMap::<i32, Vec<i64>>::new();
+        map.insert(0, readings);
+
+        let mut depth = 0;
+        loop {
+            let vals = &map[&depth];
+            let mut new_row = Vec::<i64>::new();
+
+            println!("{:?}", vals);
+            for i in 0..(vals.len()-1)
+            {
+                new_row.push(vals[i+1] - vals[i]);
+            }
+
+            depth += 1;
+            map.insert(depth, new_row.clone());
+
+            if new_row.iter().all(|f| f == &0) {
+                break;
+            }
+        }
+
+        let mut subtotal_last = 0;
+        for reading in map.clone() {
+            subtotal_last += reading.1.last().expect("should have at least one entry");
+        }
+
+        total_last += subtotal_last;
+
+        //p2 
+        let mut subtotal_first = 0;
+
+        depth -= 1;
+        loop {
+            subtotal_first = map[&depth].first().expect("should have at least one value") - subtotal_first;
+            depth -= 1;
+
+            if depth == -1 { break }
+        }
+        total_first += subtotal_first;
+    }
+
+    println!("{}", total_last);
+    println!("{}", total_first); // 20616 too high
 }
