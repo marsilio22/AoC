@@ -14,8 +14,8 @@ fn main() {
     // day7();
     // day8();
     // day9();
-    // day10();
-    day11();
+    day10();
+    // day11();
 }
 
 // todo move to mod
@@ -993,39 +993,53 @@ fn day10() {
 
         let next = valid_dirs.iter().filter(|x| x != &&last).next().unwrap();
 
-        last = current;
-
-        let mut inside = (0, 0);
-        let mut outside = (0, 0);
+        let mut insides = Vec::<(i32, i32)>::new();
+        let mut outsides = Vec::<(i32,i32)>::new();
         let mut to_insert = '.';
 
         if *next == east {
             to_insert = '>';
             // north is INSIDE
-            inside = (next.0, next.1 - 1);
+            insides.push((last.0, last.1 - 1));
+            insides.push((current.0, current.1 - 1));
+            insides.push((next.0, next.1 - 1));
             // south is OUTSIDE;
-            outside = (next.0, next.1 + 1);
+            outsides.push((last.0, last.1 + 1));
+            outsides.push((current.0, current.1 + 1));
+            outsides.push((next.0, next.1 + 1));
         }
         if *next == west {
             to_insert = '<';
             // north is OUTSIDE
-            outside = (next.0, next.1 - 1);
+            outsides.push((last.0, last.1 - 1));
+            outsides.push((current.0, current.1 - 1));
+            outsides.push((next.0, next.1 - 1));
             // south is INSIDE
-            inside = (next.0, next.1 + 1);
+            insides.push((last.0, last.1 + 1));
+            insides.push((current.0, current.1 + 1));
+            insides.push((next.0, next.1 + 1));
         }
         if *next == north {
             to_insert = '^';
             // east is OUTSIDE
-            outside = (next.0 + 1, next.1);
+            outsides.push((last.0 + 1, last.1));
+            outsides.push((current.0 + 1, current.1));
+            outsides.push((next.0 + 1, next.1));
             // west is INSIDE
-            inside = (next.0 - 1, next.1);
+            insides.push((last.0 - 1, last.1));
+            insides.push((current.0 - 1, current.1));
+            insides.push((next.0 - 1, next.1));
         }
         if *next == south {
             to_insert = 'v';
             // east is INSIDE
-            inside = (next.0 + 1, next.1);
+            insides.push((last.0 + 1, last.1));
+            insides.push((current.0 + 1, current.1));
+            insides.push((next.0 + 1, next.1));
             // west is OUTSIDE
-            outside = (next.0 - 1, next.1);
+            outsides.push((last.0 - 1, last.1));
+            outsides.push((current.0 - 1, current.1));
+            outsides.push((next.0 - 1, next.1));
         }
 
         // wtf have I done wrong here
@@ -1038,9 +1052,14 @@ fn day10() {
         // };
 
         whole_loop.insert(current, to_insert);
-        if map.contains_key(&inside) && map[&inside] == '.' { whole_loop.insert(inside, 'I'); }
-        if map.contains_key(&outside) && map[&outside] == '.' { whole_loop.insert(outside, 'O'); }
+        for inside in insides {
+            if map.contains_key(&inside) && !whole_loop.contains_key(&inside) { whole_loop.insert(inside, 'I'); }
+        }
+        for outside in outsides {
+            if map.contains_key(&outside) && !whole_loop.contains_key(&outside){ whole_loop.insert(outside, 'O'); }
+        }
 
+        last = current;
         current = *next;
         curr_pipe = map[&current];
 
@@ -1056,7 +1075,7 @@ fn day10() {
                 else{print!("{}", whole_loop[&(i, j)])}
                 // print!(" ")
             }
-            else if map[&(i, j)] == '.'{
+            else if map.contains_key(&(i, j)) && map[&(i, j)] == '.'{
                 print!("X");
             }
             else { print!(" ")}
@@ -1094,50 +1113,27 @@ fn day11() {
         }
     }
 
-    println!("rows: {:?}              columns: {:?}", rows_to_add, columns_to_add);
-
-    let mut expanded_map = HashMap::<(i32, i32), char>::new();
-
-    for galaxy in map.clone() {
-        let x_to_add: i32 = columns_to_add.iter().filter(|c| c < &&(galaxy.0.0)).count().try_into().unwrap();
-        let y_to_add: i32 = rows_to_add.iter().filter(|r| r < &&(galaxy.0.1)).count().try_into().unwrap();
-
-        expanded_map.insert((galaxy.0.0 + x_to_add, galaxy.0.1 + y_to_add), galaxy.1);
-    }
-
-    let mut total = 0;
-
-    for galaxy in expanded_map.clone() {
-        // work out min distance to each other galaxy 
-
-        for galaxy2 in expanded_map.clone() {
-            total += (galaxy2.0.0 - galaxy.0.0).abs() + (galaxy2.0.1 - galaxy.0.1).abs();
-        }
-    }
-
-    println!("{}", total/2);
-
-    //p2
+    // NB for part 2 we don't add 1million here, because we already have 1, so it's increase TO 1mill, not increas BY 1mill
+    for k in [1, 999999] {
         let mut expanded_map = HashMap::<(i32, i32), char>::new();
 
-    for galaxy in map.clone() {
-        let x_to_add: i32 = columns_to_add.iter().filter(|c| { c < &&galaxy.0.0}).count().try_into().unwrap();
-        let y_to_add: i32 = rows_to_add.iter().filter(|r| { r < &&galaxy.0.1}).count().try_into().unwrap();
+        for galaxy in map.clone() {
+            let x_to_add: i32 = columns_to_add.iter().filter(|c| c < &&(galaxy.0.0)).count().try_into().unwrap();
+            let y_to_add: i32 = rows_to_add.iter().filter(|r| r < &&(galaxy.0.1)).count().try_into().unwrap();
 
-        // println!("old: {:?}, xtoadd {}, ytoadd {}, new: {:?}", galaxy.0, x_to_add, y_to_add, (galaxy.0.0 + (1000000 * x_to_add), galaxy.0.1 + (1000000 * y_to_add)));
-        expanded_map.insert((galaxy.0.0 + (999999 * x_to_add), galaxy.0.1 + (999999 * y_to_add)), galaxy.1);
-    }
-
-    let mut total: i64 = 0;
-
-    for galaxy in expanded_map.clone() {
-        // work out min distance to each other galaxy 
-
-        for galaxy2 in expanded_map.clone() {
-            total += i64::from((galaxy2.0.0 - galaxy.0.0).abs() + (galaxy2.0.1 - galaxy.0.1).abs());
+            expanded_map.insert((galaxy.0.0 + x_to_add*k, galaxy.0.1 + y_to_add*k), galaxy.1);
         }
-    }
 
-    println!("{}", total/2);// 779033026240 too high
-                            // 779033026240
+        let mut total:i64 = 0;
+
+        for galaxy in expanded_map.clone() {
+            // work out min distance to each other galaxy 
+            for galaxy2 in expanded_map.clone() {
+                //NB we do count the distance between each galaxy and itself, which is 0, so adds nothing to the total
+                total += i64::from((galaxy2.0.0 - galaxy.0.0).abs() + (galaxy2.0.1 - galaxy.0.1).abs());
+            }
+        }
+
+        println!("{}", total/2);
+    }
 }
