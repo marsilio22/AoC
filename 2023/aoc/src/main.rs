@@ -14,7 +14,8 @@ fn main() {
     // day7();
     // day8();
     // day9();
-    day10();
+    // day10();
+    day11();
 }
 
 // todo move to mod
@@ -1065,4 +1066,78 @@ fn day10() {
 
 
 
+}
+
+fn day11() {
+    let contents = fs::read_to_string("./inputs/day11").expect("Should have read the file");
+    let rows = contents.lines();
+
+    let mut map = HashMap::<(i32, i32), char>::new();
+
+    for (j, r) in rows.enumerate() {
+        for (i, c) in r.chars().enumerate() {
+            if c == '#' {
+                map.insert((i.try_into().unwrap(), j.try_into().unwrap()), c);
+            }
+        }
+    }
+
+    let mut columns_to_add = Vec::<i32>::new();
+    let mut rows_to_add = Vec::<i32>::new();
+
+    for i in 0..140 {
+        if map.keys().all(|k| k.0 != i) {
+            columns_to_add.push(i);
+        }
+        if map.keys().all(|k| k.1 != i) {
+            rows_to_add.push(i);
+        }
+    }
+
+    println!("rows: {:?}              columns: {:?}", rows_to_add, columns_to_add);
+
+    let mut expanded_map = HashMap::<(i32, i32), char>::new();
+
+    for galaxy in map.clone() {
+        let x_to_add: i32 = columns_to_add.iter().filter(|c| c < &&(galaxy.0.0)).count().try_into().unwrap();
+        let y_to_add: i32 = rows_to_add.iter().filter(|r| r < &&(galaxy.0.1)).count().try_into().unwrap();
+
+        expanded_map.insert((galaxy.0.0 + x_to_add, galaxy.0.1 + y_to_add), galaxy.1);
+    }
+
+    let mut total = 0;
+
+    for galaxy in expanded_map.clone() {
+        // work out min distance to each other galaxy 
+
+        for galaxy2 in expanded_map.clone() {
+            total += (galaxy2.0.0 - galaxy.0.0).abs() + (galaxy2.0.1 - galaxy.0.1).abs();
+        }
+    }
+
+    println!("{}", total/2);
+
+    //p2
+        let mut expanded_map = HashMap::<(i32, i32), char>::new();
+
+    for galaxy in map.clone() {
+        let x_to_add: i32 = columns_to_add.iter().filter(|c| { c < &&galaxy.0.0}).count().try_into().unwrap();
+        let y_to_add: i32 = rows_to_add.iter().filter(|r| { r < &&galaxy.0.1}).count().try_into().unwrap();
+
+        // println!("old: {:?}, xtoadd {}, ytoadd {}, new: {:?}", galaxy.0, x_to_add, y_to_add, (galaxy.0.0 + (1000000 * x_to_add), galaxy.0.1 + (1000000 * y_to_add)));
+        expanded_map.insert((galaxy.0.0 + (999999 * x_to_add), galaxy.0.1 + (999999 * y_to_add)), galaxy.1);
+    }
+
+    let mut total: i64 = 0;
+
+    for galaxy in expanded_map.clone() {
+        // work out min distance to each other galaxy 
+
+        for galaxy2 in expanded_map.clone() {
+            total += i64::from((galaxy2.0.0 - galaxy.0.0).abs() + (galaxy2.0.1 - galaxy.0.1).abs());
+        }
+    }
+
+    println!("{}", total/2);// 779033026240 too high
+                            // 779033026240
 }
