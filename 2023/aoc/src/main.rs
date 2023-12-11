@@ -1,9 +1,11 @@
 use std::fs;
 use std::collections::HashMap;
 use std::cmp::Ordering;
+use std::time::Instant;
 use num::integer::lcm;
 
 fn main() {
+    let then = Instant::now();
     // day1();
     // day2();
     // day3();
@@ -14,8 +16,12 @@ fn main() {
     // day7();
     // day8();
     // day9();
-    day10();
+    // day10();
     // day11();
+
+    let now = Instant::now();
+
+    println!("took {:?} to run", now.duration_since(then));
 }
 
 // todo move to mod
@@ -332,22 +338,14 @@ fn day5_2()
     let mut loop_seeds = Vec::<(i64, i64)>::new();
 
     loop {
-
-        // println!("seeds {:?} & loop_seeds {:?}", seeds, loop_seeds);
-
         let nums = match rows.next() {
             Some(a) => a,
             None => break
         };
 
-        // println!("nums {:?}", nums);
-
         if nums.is_empty() {
             // replace seeds array proper for the next loop
-
             seeds.retain(|x| {x.0 != -1});
-
-            // println!("loop {:?}", loop_seeds);
 
             for seed in loop_seeds.clone().iter() {
                 seeds.push(*seed);
@@ -404,8 +402,6 @@ fn day5_2()
             for thing in unmapped_seeds {
                 seeds.push(thing);
             }
-
-            // println!("{:?}, {:?}", loop_seeds.clone(), seeds);
         }
     }
 
@@ -416,8 +412,6 @@ fn day5_2()
     }
 
     let mut min = i64::MAX;
-
-    // println!("{:?}", seeds);
 
     for seed in seeds.iter() {
         if seed.0 != -1 && seed.0 < min { min = seed.0 }
@@ -473,7 +467,6 @@ fn day6() {
             }
         }
 
-        // println!("{}: {}", input.0, max - min + 1); // +1 because it's inclusive 
         res *= max - min + 1;
     }
 
@@ -832,7 +825,7 @@ fn day8() {
 
     // p2
     
-    let mut currents = map.keys().filter(|x| x.ends_with("A"));
+    let currents = map.keys().filter(|x| x.ends_with("A"));
 
     let mut counts = Vec::<i64>::new();
 
@@ -888,7 +881,6 @@ fn day9() {
             let vals = &map[&depth];
             let mut new_row = Vec::<i64>::new();
 
-            println!("{:?}", vals);
             for i in 0..(vals.len()-1)
             {
                 new_row.push(vals[i+1] - vals[i]);
@@ -1068,23 +1060,48 @@ fn day10() {
 
     println!("{}", length/2);
 
-    for j in 0..140 {
-        for i in 0..140 {
-            if whole_loop.contains_key(&(i, j)) {
-                if map[&(i, j)] == 'S' { print!("S")}
-                else{print!("{}", whole_loop[&(i, j)])}
-                // print!(" ")
-            }
-            else if map.contains_key(&(i, j)) && map[&(i, j)] == '.'{
-                print!("X");
-            }
-            else { print!(" ")}
+    // I originally solved this by just looking at the picture, and using Ctrl+F to count I's and blanks, but now the code below does that :)
+    // for j in 0..140 {
+    //     for i in 0..140 {
+    //         if whole_loop.contains_key(&(i, j)) {
+    //             if map[&(i, j)] == 'S' { print!("S")}
+    //             else{print!("{}", whole_loop[&(i, j)])}
+    //         }
+    //         else { print!(" ")}
+    //     }
+    //     println!();
+    // }
+
+    let mut min_inside_x = i32::MAX;
+    let mut max_inside_x = 0;
+    let mut min_inside_y = i32::MAX;
+    let mut max_inside_y = 0;
+
+    let mut inside_spaces = 0;
+
+    for loop_entry in whole_loop.clone() {
+        if loop_entry.1 == 'I' {
+            inside_spaces += 1;
+
+            if loop_entry.0.0 < min_inside_x { min_inside_x = loop_entry.0.0 };
+            if loop_entry.0.0 > max_inside_x { max_inside_x = loop_entry.0.0 };
+            if loop_entry.0.1 < min_inside_y { min_inside_y = loop_entry.0.1 };
+            if loop_entry.0.1 > max_inside_y { max_inside_y = loop_entry.0.1 };
         }
-        println!();
     }
 
+    let mut undocumented_inside_spaces = 0;
 
+    for j in min_inside_y..max_inside_y {
+        for i in min_inside_x..max_inside_x {
+            if !whole_loop.contains_key(&(i, j))
+            {
+                undocumented_inside_spaces += 1;
+            }
+        }
+    }
 
+    println!("{}", undocumented_inside_spaces + inside_spaces);
 }
 
 fn day11() {
