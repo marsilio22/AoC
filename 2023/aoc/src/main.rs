@@ -3,6 +3,8 @@ use std::collections::HashMap;
 use std::cmp::Ordering;
 use std::time::Instant;
 use num::integer::lcm;
+use itertools::Itertools;
+use string_builder::Builder;
 
 fn main() {
     let then = Instant::now();
@@ -18,7 +20,7 @@ fn main() {
     // day9();
     // day10();
     // day11();
-
+    day12();
     let now = Instant::now();
 
     println!("took {:?} to run", now.duration_since(then));
@@ -1152,5 +1154,86 @@ fn day11() {
         }
 
         println!("{}", total/2);
+    }
+}
+
+fn day12() {
+    let contents = fs::read_to_string("./inputs/day12").expect("Should have read the file");
+    let rows = contents.lines();
+
+    // number of groups of filled in elements + number of spaces NOT between them
+    // e.g. fitting 1, 1, 1 into 10 spaces is 3 groups, and 4 spaces = choice of 1 to 7
+
+    // tuple length is number of groups
+
+    for row in rows {
+        let mut split = row.split(" ");
+
+        let pattern = split.next().expect("should have pattern");
+        let groups_str = split.next().expect("should have groups");
+
+        let groups = groups_str.split(",")
+            .map(|x| x.parse::<i32>().expect("groups should be i32"))
+            .collect::<Vec<i32>>();
+
+        // max group length is 6
+        // white spaces remaining is total spaces - (group sum + group length - 1)
+
+        let groups_len:i32 = groups.len().try_into().unwrap();
+        let to_subtract:i32 = groups.iter().sum::<i32>() + groups_len - 1;
+
+        let pattern_len:i32 = pattern.len().try_into().unwrap();
+
+        let white_spaces = pattern_len - to_subtract;
+
+        let iter_range = 0..(groups_len + white_spaces);
+
+        // println!("{} - {} = {:?}", pattern_len, to_subtract, iter_range);
+
+        if groups.len() == 3
+        {
+            let combos = iter_range.tuple_combinations::<(i32, i32, i32)>().collect::<Vec<(i32, i32, i32)>>();
+
+            for combo in combos {
+                let mut builder = Builder::default();
+
+                for _ in 0..combo.0{
+                    builder.append(".");
+                }
+
+                for _ in 0..groups[0] {
+                    builder.append("#");
+                }
+
+                for _ in 0..(combo.1 - combo.0) {
+                    builder.append(".");
+                }
+
+                for _ in 0..groups[1] {
+                    builder.append("#");
+                }
+                
+                for _ in 0..(combo.2 - combo.1) {
+                    builder.append(".");
+                }
+
+                for _ in 0..groups[2] {
+                    builder.append("#");
+                }
+
+                // the `combo.2` here is actually (combo.0 + combo.1 - combo.0 + combo.2 - combo.1)
+                for _ in 0..(pattern_len - (groups[0] + groups[1] + groups[2] + combo.2)) {
+                    builder.append(".");
+                }
+
+                println!("{:?}", builder.string().unwrap()); // this is **every** combination
+
+                // now find the ones which match the `#` and `.` in the original pattern
+                // AND i need to do all the ones which are other grouping lengths
+                // this is going to be copy paste hell
+
+            }
+
+        }
     }
 }
