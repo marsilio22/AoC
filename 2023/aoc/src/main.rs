@@ -21,7 +21,8 @@ fn main() {
     // day9();
     // day10();
     // day11();
-    day12();
+    // day12();
+    day13();
     let now = Instant::now();
 
     println!("took {:?} to run", now.duration_since(then));
@@ -1167,7 +1168,7 @@ fn day12() {
 
     // tuple length is number of groups
     let mut total = 0;
-    for row in rows {
+    for row in rows.clone() {
         let mut options = 0;
 
         let mut split = row.split(" ");
@@ -1192,277 +1193,110 @@ fn day12() {
         let iter_range = 0..(groups_len + white_spaces);
 
         // println!("{} - {} = {:?}", pattern_len, to_subtract, iter_range);
+        let combos = iter_range.clone().combinations(groups.len()).collect::<Vec<Vec<i32>>>();
 
-        if groups.len() == 2
-        {
-            let combos = iter_range.clone().tuple_combinations::<(i32, i32)>().collect::<Vec<(i32, i32)>>();
-
-            for combo in combos {
-                let mut builder = Builder::default();
-
-                for _ in 0..combo.0{
+        for combo in combos {
+            let mut builder = Builder::default();
+            for j in 0..combo.len() {
+                let dot_count = if j == 0 { combo[0] } else { combo[j] - combo[j-1] };
+                for _ in 0..dot_count {
                     builder.append(".");
                 }
-
-                for _ in 0..groups[0] {
+                // groups and combos contain the same number of elements, I hope
+                for _ in 0..groups[j] {
                     builder.append("#");
                 }
-
-                for _ in 0..(combo.1 - combo.0) {
-                    builder.append(".");
-                }
-
-                for _ in 0..groups[1] {
-                    builder.append("#");
-                }
-
-                for _ in 0..(pattern_len - (groups[0] + groups[1] + combo.1)) {
-                    builder.append(".");
-                }
-
-                let mut valid = true;
-                for pair in zip(builder.string().unwrap().chars(), pattern.chars()) {
-                    if pair.1 != '?' && pair.0 != pair.1 {
-                        valid = false;
-                        break;
-                    }
-                }
-
-                options += if valid { 1 } else { 0 }
             }
+
+            for _ in 0..(pattern_len - (groups.iter().sum::<i32>() + combo.last().expect("should have last"))) {
+                builder.append(".");
+            }
+
+            let mut valid = true;
+            for pair in zip(builder.string().unwrap().chars(), pattern.chars()) {
+                if pair.1 != '?' && pair.0 != pair.1 {
+                    valid = false;
+                    break;
+                }
+            }
+
+            options += if valid { 1 } else { 0 }
         }
-        if groups.len() == 3
-        {
-            let combos = iter_range.clone().tuple_combinations::<(i32, i32, i32)>().collect::<Vec<(i32, i32, i32)>>();
 
-            for combo in combos {
-                let mut builder = Builder::default();
+        total += options;
+    }
 
-                for _ in 0..combo.0{
-                    builder.append(".");
-                }
+    println!("{}", total);
 
-                for _ in 0..groups[0] {
-                    builder.append("#");
-                }
 
-                for _ in 0..(combo.1 - combo.0) {
-                    builder.append(".");
-                }
 
-                for _ in 0..groups[1] {
-                    builder.append("#");
-                }
-                
-                for _ in 0..(combo.2 - combo.1) {
-                    builder.append(".");
-                }
 
-                for _ in 0..groups[2] {
-                    builder.append("#");
-                }
+    total = 0;
+    for row in rows.clone() {
+        let mut options = 0;
 
-                // the `combo.2` here is actually (combo.0 + combo.1 - combo.0 + combo.2 - combo.1)
-                for _ in 0..(pattern_len - (groups[0] + groups[1] + groups[2] + combo.2)) {
-                    builder.append(".");
-                }
+        let mut split = row.split(" ");
 
-                let mut valid = true;
-                for pair in zip(builder.string().unwrap().chars(), pattern.chars()) {
-                    if pair.1 != '?' && pair.0 != pair.1 {
-                        valid = false;
-                        break;
-                    }
-                }
+        let mut pattern_builder = Builder::default();
+        let mut groups_builder = Builder::default();
 
-                options += if valid { 1 } else { 0 }
-            }
+        let pattern = split.next().expect("should have pattern");
+        let groups_str = split.next().expect("should have groups");
+
+        pattern_builder.append(pattern);
+        groups_builder.append(groups_str);
+
+        for _ in 0..4 {
+            pattern_builder.append("?");
+            pattern_builder.append(pattern);
+            groups_builder.append(",");
+            groups_builder.append(groups_str);
         }
-        if groups.len() == 4
-        {
-            let combos = iter_range.clone().tuple_combinations::<(i32, i32, i32, i32)>().collect::<Vec<(i32, i32, i32, i32)>>();
 
-            for combo in combos {
-                let mut builder = Builder::default();
+        let pattern = pattern_builder.string().expect("");
+        let groups_str = groups_builder.string().expect("");
 
-                for _ in 0..combo.0{
+        let groups = groups_str.split(",")
+            .map(|x| x.parse::<i32>().expect("groups should be i32"))
+            .collect::<Vec<i32>>();
+
+        let groups_len:i32 = groups.len().try_into().unwrap();
+        let to_subtract:i32 = groups.iter().sum::<i32>() + groups_len - 1;
+
+        let pattern_len:i32 = pattern.len().try_into().unwrap();
+
+        let white_spaces = pattern_len - to_subtract;
+
+        let iter_range = 0..(groups_len + white_spaces);
+        // this line tanks the memory creating 70k TB of combos...
+        let combos = iter_range.clone().combinations(groups.len()).collect::<Vec<Vec<i32>>>();
+
+        for combo in combos {
+            let mut builder = Builder::default();
+            for j in 0..combo.len() {
+                let dot_count = if j == 0 { combo[0] } else { combo[j] - combo[j-1] };
+                for _ in 0..dot_count {
                     builder.append(".");
                 }
-
-                for _ in 0..groups[0] {
+                // groups and combos contain the same number of elements, I hope
+                for _ in 0..groups[j] {
                     builder.append("#");
                 }
-
-                for _ in 0..(combo.1 - combo.0) {
-                    builder.append(".");
-                }
-
-                for _ in 0..groups[1] {
-                    builder.append("#");
-                }
-                
-                for _ in 0..(combo.2 - combo.1) {
-                    builder.append(".");
-                }
-
-                for _ in 0..groups[2] {
-                    builder.append("#");
-                }
-                
-                for _ in 0..(combo.3 - combo.2) {
-                    builder.append(".");
-                }
-
-                for _ in 0..groups[3] {
-                    builder.append("#");
-                }
-
-                for _ in 0..(pattern_len - (groups[0] + groups[1] + groups[2] + groups[3] + combo.3)) {
-                    builder.append(".");
-                }
-
-                let mut valid = true;
-                for pair in zip(builder.string().unwrap().chars(), pattern.chars()) {
-                    if pair.1 != '?' && pair.0 != pair.1 {
-                        valid = false;
-                        break;
-                    }
-                }
-
-                options += if valid { 1 } else { 0 }
             }
-        }
-        if groups.len() == 5
-        {
-            let combos = iter_range.clone().tuple_combinations::<(i32, i32, i32, i32, i32)>().collect::<Vec<(i32, i32, i32, i32, i32)>>();
 
-            for combo in combos {
-                let mut builder = Builder::default();
-
-                for _ in 0..combo.0{
-                    builder.append(".");
-                }
-
-                for _ in 0..groups[0] {
-                    builder.append("#");
-                }
-
-                for _ in 0..(combo.1 - combo.0) {
-                    builder.append(".");
-                }
-
-                for _ in 0..groups[1] {
-                    builder.append("#");
-                }
-                
-                for _ in 0..(combo.2 - combo.1) {
-                    builder.append(".");
-                }
-
-                for _ in 0..groups[2] {
-                    builder.append("#");
-                }
-                
-                for _ in 0..(combo.3 - combo.2) {
-                    builder.append(".");
-                }
-
-                for _ in 0..groups[3] {
-                    builder.append("#");
-                }
-                
-                for _ in 0..(combo.4 - combo.3) {
-                    builder.append(".");
-                }
-
-                for _ in 0..groups[4] {
-                    builder.append("#");
-                }
-
-                for _ in 0..(pattern_len - (groups[0] + groups[1] + groups[2] + groups[3] + groups[4]+ combo.4)) {
-                    builder.append(".");
-                }
-
-                let mut valid = true;
-                for pair in zip(builder.string().unwrap().chars(), pattern.chars()) {
-                    if pair.1 != '?' && pair.0 != pair.1 {
-                        valid = false;
-                        break;
-                    }
-                }
-
-                options += if valid { 1 } else { 0 }
+            for _ in 0..(pattern_len - (groups.iter().sum::<i32>() + combo.last().expect("should have last"))) {
+                builder.append(".");
             }
-        }
-        if groups.len() == 6
-        {
-            let combos = iter_range.clone().tuple_combinations::<(i32, i32, i32, i32, i32, i32)>().collect::<Vec<(i32, i32, i32, i32, i32, i32)>>();
 
-            for combo in combos {
-                let mut builder = Builder::default();
-
-                for _ in 0..combo.0{
-                    builder.append(".");
+            let mut valid = true;
+            for pair in zip(builder.string().unwrap().chars(), pattern.chars()) {
+                if pair.1 != '?' && pair.0 != pair.1 {
+                    valid = false;
+                    break;
                 }
-
-                for _ in 0..groups[0] {
-                    builder.append("#");
-                }
-
-                for _ in 0..(combo.1 - combo.0) {
-                    builder.append(".");
-                }
-
-                for _ in 0..groups[1] {
-                    builder.append("#");
-                }
-                
-                for _ in 0..(combo.2 - combo.1) {
-                    builder.append(".");
-                }
-
-                for _ in 0..groups[2] {
-                    builder.append("#");
-                }
-                
-                for _ in 0..(combo.3 - combo.2) {
-                    builder.append(".");
-                }
-
-                for _ in 0..groups[3] {
-                    builder.append("#");
-                }
-                
-                for _ in 0..(combo.4 - combo.3) {
-                    builder.append(".");
-                }
-
-                for _ in 0..groups[4] {
-                    builder.append("#");
-                }
-                
-                for _ in 0..(combo.5 - combo.4) {
-                    builder.append(".");
-                }
-
-                for _ in 0..groups[5] {
-                    builder.append("#");
-                }
-
-                for _ in 0..(pattern_len - (groups[0] + groups[1] + groups[2] + groups[3] + groups[4] + groups[5] + combo.5)) {
-                    builder.append(".");
-                }
-
-                let mut valid = true;
-                for pair in zip(builder.string().unwrap().chars(), pattern.chars()) {
-                    if pair.1 != '?' && pair.0 != pair.1 {
-                        valid = false;
-                        break;
-                    }
-                }
-
-                options += if valid { 1 } else { 0 }
             }
+
+            options += if valid { 1 } else { 0 }
         }
 
         total += options;
