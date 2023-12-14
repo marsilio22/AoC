@@ -1,6 +1,7 @@
 use std::fs;
 use std::collections::HashMap;
 use std::cmp::Ordering;
+use std::iter::zip;
 use std::time::Instant;
 use num::integer::lcm;
 use itertools::Itertools;
@@ -1165,8 +1166,10 @@ fn day12() {
     // e.g. fitting 1, 1, 1 into 10 spaces is 3 groups, and 4 spaces = choice of 1 to 7
 
     // tuple length is number of groups
-
+    let mut total = 0;
     for row in rows {
+        let mut options = 0;
+
         let mut split = row.split(" ");
 
         let pattern = split.next().expect("should have pattern");
@@ -1190,9 +1193,47 @@ fn day12() {
 
         // println!("{} - {} = {:?}", pattern_len, to_subtract, iter_range);
 
+        if groups.len() == 2
+        {
+            let combos = iter_range.clone().tuple_combinations::<(i32, i32)>().collect::<Vec<(i32, i32)>>();
+
+            for combo in combos {
+                let mut builder = Builder::default();
+
+                for _ in 0..combo.0{
+                    builder.append(".");
+                }
+
+                for _ in 0..groups[0] {
+                    builder.append("#");
+                }
+
+                for _ in 0..(combo.1 - combo.0) {
+                    builder.append(".");
+                }
+
+                for _ in 0..groups[1] {
+                    builder.append("#");
+                }
+
+                for _ in 0..(pattern_len - (groups[0] + groups[1] + combo.1)) {
+                    builder.append(".");
+                }
+
+                let mut valid = true;
+                for pair in zip(builder.string().unwrap().chars(), pattern.chars()) {
+                    if pair.1 != '?' && pair.0 != pair.1 {
+                        valid = false;
+                        break;
+                    }
+                }
+
+                options += if valid { 1 } else { 0 }
+            }
+        }
         if groups.len() == 3
         {
-            let combos = iter_range.tuple_combinations::<(i32, i32, i32)>().collect::<Vec<(i32, i32, i32)>>();
+            let combos = iter_range.clone().tuple_combinations::<(i32, i32, i32)>().collect::<Vec<(i32, i32, i32)>>();
 
             for combo in combos {
                 let mut builder = Builder::default();
@@ -1226,14 +1267,206 @@ fn day12() {
                     builder.append(".");
                 }
 
-                println!("{:?}", builder.string().unwrap()); // this is **every** combination
+                let mut valid = true;
+                for pair in zip(builder.string().unwrap().chars(), pattern.chars()) {
+                    if pair.1 != '?' && pair.0 != pair.1 {
+                        valid = false;
+                        break;
+                    }
+                }
 
-                // now find the ones which match the `#` and `.` in the original pattern
-                // AND i need to do all the ones which are other grouping lengths
-                // this is going to be copy paste hell
-
+                options += if valid { 1 } else { 0 }
             }
-
         }
+        if groups.len() == 4
+        {
+            let combos = iter_range.clone().tuple_combinations::<(i32, i32, i32, i32)>().collect::<Vec<(i32, i32, i32, i32)>>();
+
+            for combo in combos {
+                let mut builder = Builder::default();
+
+                for _ in 0..combo.0{
+                    builder.append(".");
+                }
+
+                for _ in 0..groups[0] {
+                    builder.append("#");
+                }
+
+                for _ in 0..(combo.1 - combo.0) {
+                    builder.append(".");
+                }
+
+                for _ in 0..groups[1] {
+                    builder.append("#");
+                }
+                
+                for _ in 0..(combo.2 - combo.1) {
+                    builder.append(".");
+                }
+
+                for _ in 0..groups[2] {
+                    builder.append("#");
+                }
+                
+                for _ in 0..(combo.3 - combo.2) {
+                    builder.append(".");
+                }
+
+                for _ in 0..groups[3] {
+                    builder.append("#");
+                }
+
+                for _ in 0..(pattern_len - (groups[0] + groups[1] + groups[2] + groups[3] + combo.3)) {
+                    builder.append(".");
+                }
+
+                let mut valid = true;
+                for pair in zip(builder.string().unwrap().chars(), pattern.chars()) {
+                    if pair.1 != '?' && pair.0 != pair.1 {
+                        valid = false;
+                        break;
+                    }
+                }
+
+                options += if valid { 1 } else { 0 }
+            }
+        }
+        if groups.len() == 5
+        {
+            let combos = iter_range.clone().tuple_combinations::<(i32, i32, i32, i32, i32)>().collect::<Vec<(i32, i32, i32, i32, i32)>>();
+
+            for combo in combos {
+                let mut builder = Builder::default();
+
+                for _ in 0..combo.0{
+                    builder.append(".");
+                }
+
+                for _ in 0..groups[0] {
+                    builder.append("#");
+                }
+
+                for _ in 0..(combo.1 - combo.0) {
+                    builder.append(".");
+                }
+
+                for _ in 0..groups[1] {
+                    builder.append("#");
+                }
+                
+                for _ in 0..(combo.2 - combo.1) {
+                    builder.append(".");
+                }
+
+                for _ in 0..groups[2] {
+                    builder.append("#");
+                }
+                
+                for _ in 0..(combo.3 - combo.2) {
+                    builder.append(".");
+                }
+
+                for _ in 0..groups[3] {
+                    builder.append("#");
+                }
+                
+                for _ in 0..(combo.4 - combo.3) {
+                    builder.append(".");
+                }
+
+                for _ in 0..groups[4] {
+                    builder.append("#");
+                }
+
+                for _ in 0..(pattern_len - (groups[0] + groups[1] + groups[2] + groups[3] + groups[4]+ combo.4)) {
+                    builder.append(".");
+                }
+
+                let mut valid = true;
+                for pair in zip(builder.string().unwrap().chars(), pattern.chars()) {
+                    if pair.1 != '?' && pair.0 != pair.1 {
+                        valid = false;
+                        break;
+                    }
+                }
+
+                options += if valid { 1 } else { 0 }
+            }
+        }
+        if groups.len() == 6
+        {
+            let combos = iter_range.clone().tuple_combinations::<(i32, i32, i32, i32, i32, i32)>().collect::<Vec<(i32, i32, i32, i32, i32, i32)>>();
+
+            for combo in combos {
+                let mut builder = Builder::default();
+
+                for _ in 0..combo.0{
+                    builder.append(".");
+                }
+
+                for _ in 0..groups[0] {
+                    builder.append("#");
+                }
+
+                for _ in 0..(combo.1 - combo.0) {
+                    builder.append(".");
+                }
+
+                for _ in 0..groups[1] {
+                    builder.append("#");
+                }
+                
+                for _ in 0..(combo.2 - combo.1) {
+                    builder.append(".");
+                }
+
+                for _ in 0..groups[2] {
+                    builder.append("#");
+                }
+                
+                for _ in 0..(combo.3 - combo.2) {
+                    builder.append(".");
+                }
+
+                for _ in 0..groups[3] {
+                    builder.append("#");
+                }
+                
+                for _ in 0..(combo.4 - combo.3) {
+                    builder.append(".");
+                }
+
+                for _ in 0..groups[4] {
+                    builder.append("#");
+                }
+                
+                for _ in 0..(combo.5 - combo.4) {
+                    builder.append(".");
+                }
+
+                for _ in 0..groups[5] {
+                    builder.append("#");
+                }
+
+                for _ in 0..(pattern_len - (groups[0] + groups[1] + groups[2] + groups[3] + groups[4] + groups[5] + combo.5)) {
+                    builder.append(".");
+                }
+
+                let mut valid = true;
+                for pair in zip(builder.string().unwrap().chars(), pattern.chars()) {
+                    if pair.1 != '?' && pair.0 != pair.1 {
+                        valid = false;
+                        break;
+                    }
+                }
+
+                options += if valid { 1 } else { 0 }
+            }
+        }
+
+        total += options;
     }
+
+    println!("{}", total);
 }
