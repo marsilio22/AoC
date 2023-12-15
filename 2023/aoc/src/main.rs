@@ -1304,3 +1304,66 @@ fn day12() {
 
     println!("{}", total);
 }
+
+fn day13() {
+    let contents = fs::read_to_string("./inputs/day13").expect("Should have read the file");
+    let mut rows = contents.lines(); 
+
+    let mut maps = Vec::<Vec<&str>>::new();
+
+    let mut current = vec![];
+
+    let mut total = 0;
+
+    loop { 
+        let row = match rows.next() {
+            Some(a) => a,
+            None => break
+        };
+
+        if row.is_empty() {
+            maps.push(current);
+            current = vec![];
+        }
+
+        current.push(row);
+    }
+
+    for map in maps {
+        // check rows
+        let mut it_was_a_row = false;
+
+        for row in map.clone().iter().enumerate() {
+            if map.len() > row.0 + 1 {
+                // this isn't yet the last row, so check whether this matches the *next* row
+                if row.1.eq(&map[row.0 + 1]) {
+                    total += (100 * row.0);
+                    it_was_a_row = true;
+                    break;
+                }
+            }
+        }
+
+        if it_was_a_row { println!("row"); continue; }
+
+        // check cols
+        for col in map[0].chars().enumerate() {
+            let mut strb_1 = Builder::default();
+            let mut strb_2 = Builder::default();
+
+            for row in map.clone() {
+                strb_1.append(row.chars().skip(col.0 - 1).next().expect(""));
+                strb_2.append(row.chars().skip(col.0).next().expect(""));
+            }
+
+            println!("{}, {}", strb_1.string().expect(""), strb_2.string().expect(""));
+
+            // if strb_1.string().expect("") .eq(&strb_2.string().expect("")) {
+            //     total += col.0;
+            //     break;
+            // }
+        }
+    }
+
+    println!("{}", total);
+}
