@@ -1441,103 +1441,50 @@ fn day14() {
     let rows = contents.lines();
 
     let mut map = HashMap::<(usize, usize), char>::new();
-    let mut max_i = 0;
     let mut max_j = 0;
-
     for (j, r) in rows.clone().enumerate() {
         for (i, c) in r.chars().enumerate() {
             if c != '.' {
-                // hack this to start at index 1 for reasons of usize being unsigned, and needingto denote the edges of the map later
-                map.insert(((i+1).try_into().unwrap(), (j+1).try_into().unwrap()), c);
+                // hack this to start at index 1 for reasons of usize being unsigned, and needingto denote the top of the map later
+                map.insert((i.try_into().unwrap(), (j+1).try_into().unwrap()), c);
             }
-            max_i = i + 1; // fmlfmlfml
         }
         max_j = j + 1; // fml
-    }
-
-    for i in 0..max_i + 1{
-        map.insert((i, 0), '#');
-        map.insert((i, max_j + 1), '#');
-    }
-
-    for j in 0..max_j + 1{
-        map.insert((0, j), '#');
-        map.insert((max_i + 1, j), '#');
     }
 
     let mut new_map = HashMap::<(usize, usize), char>::new();
 
     for j in 0..rows.clone().count() {
         // for each column
-        // for each `#`, check how many `O`s there are beneath it before the next `#`
+        // move every `O` to the lowest down `#` north of it plus the number of `O`'s north of it
+
         let map_clone = map.clone();
         let column = map_clone.iter().filter(|z| z.0.0 == j);
 
         for entry in column.clone() {
-            if entry.1 == &'#' {
-                let next_southerly_rock = match column.clone()
-                    .filter(|x| x.1 == &'#' && x.0.1 > entry.0.1)
-                    .min_by_key(|x| x.0.1) {
-                        Some(a) => (*a.0, a.1),
-                        None => {new_map.insert(*entry.0, *entry.1); continue;}
+            if entry.1 == &'O' {
+                let closest_rock_north = match column.clone()
+                    .filter(|x| x.1 == &'#' && x.0.1 < entry.0.1)
+                    .max_by_key(|x| x.0.1 ) {
+                        Some(a) => (*a.0, a.1) ,
+                        None => {let key = (entry.0.0, 0); (key , &'#')},
                     };
-                
-                let rocks_south_of_me = column.clone()
-                    .filter(|c| c.1 == &'O' && c.0.1 > entry.0.1 && c.0.1 < next_southerly_rock.0.1).count();
 
+                // if entry.0.0 == 0 {
+                //     println!("{:?} -> {:?}", entry, closest_rock_north);
+                // }
+
+                let number_of_round_rocks_north = 
+                    column.clone().filter(|c| c.1 == &'O' && c.0.1 > closest_rock_north.0.1 && c.0.1 < entry.0.1 ).count();
+
+                let new_key = (closest_rock_north.0.0, closest_rock_north.0.1 + number_of_round_rocks_north + 1);
+
+                new_map.insert(new_key, 'O');
+            }
+            else {
                 new_map.insert(*entry.0, *entry.1);
-                
-                for i in 0..rocks_south_of_me {
-                    new_map.insert((entry.0.0, entry.0.1 + 1 + i), 'O');
-                }
             }
         }
-
-
-
-
-
-
-
-
-        // for entry in column.clone() {
-        //     if entry.1 == &'O' {
-        //         let closest_rock_north = match column.clone()
-        //             .filter(|x| x.1 == &'#' && x.0.1 < entry.0.1)
-        //             .max_by_key(|x| x.0.1 ) {
-        //                 Some(a) => (*a.0, a.1) ,
-        //                 None => {let key = (entry.0.0, 0); (key , &'#')},
-        //             };
-
-        //         let number_of_round_rocks_north = 
-        //             column.clone().filter(|c| c.1 == &'O' && c.0.1 > closest_rock_north.0.1 && c.0.1 < entry.0.1 ).count();
-
-        //         let new_key = (closest_rock_north.0.0, closest_rock_north.0.1 + number_of_round_rocks_north + 1);
-
-        //         new_map.insert(new_key, 'O');
-        //     }
-        //     else {
-        //         new_map.insert(*entry.0, *entry.1);
-        //     }
-        // }
-    }
-
-    for j in 0..max_j + 2 {
-        for i in 0..max_i + 2 {
-            let key = &(i.try_into().unwrap(), j.try_into().unwrap());
-            print!("{}", if map.contains_key(key) { map[key] } else { ' ' } );
-        }
-        println!();
-    }
-
-    println!("");
-
-    for j in 0..max_j + 2 {
-        for i in 0..max_i + 2 {
-            let key = &(i.try_into().unwrap(), j.try_into().unwrap());
-            print!("{}", if new_map.contains_key(key) { new_map[key] } else { ' ' } );
-        }
-        println!();
     }
 
     let mut total = 0;
