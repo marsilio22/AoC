@@ -1446,15 +1446,73 @@ fn day14() {
         for (i, c) in r.chars().enumerate() {
             if c != '.' {
                 // hack this to start at index 1 for reasons of usize being unsigned, and needingto denote the top of the map later
-                map.insert((i.try_into().unwrap(), (j+1).try_into().unwrap()), c);
+                map.insert(((i+1).try_into().unwrap(), (j+1).try_into().unwrap()), c);
             }
         }
         max_j = j + 1; // fml
     }
 
-    let mut new_map = HashMap::<(usize, usize), char>::new();
+    let mut new_map = day14_move_north(max_j+1, map);
 
-    for j in 0..rows.clone().count() {
+    let mut total = 0;
+
+    for thing in new_map.clone() {
+        if thing.1 == 'O' {
+            total += (max_j - thing.0.1 + 1);
+        }
+    }
+
+    println!("{}", total);
+
+    //p2
+    let mut maps_over_time = HashMap::<i32, HashMap<(usize, usize), char>>::new();
+    
+    new_map = day14_move_west(max_j+1, new_map);
+    new_map = day14_move_south(max_j+1, new_map);
+    new_map = day14_move_east(max_j+1, new_map);
+
+    let mut i = 1;
+
+    maps_over_time.insert(i, new_map.clone());
+
+    // this takes about 7.5 minutes to run...
+    loop {
+        i += 1;
+        
+        new_map = day14_move_north(max_j + 1, new_map);
+        new_map = day14_move_west(max_j+1, new_map);
+        new_map = day14_move_south(max_j+1, new_map);
+        new_map = day14_move_east(max_j+1, new_map);
+
+        let clone = maps_over_time.clone();
+        let dupes = clone.iter().filter(|m| m.1 == &new_map);
+
+        if dupes.clone().count() > 0 {
+            let dupe = dupes.last().expect("");
+
+            let state = ((1_000_000_000 - dupe.0) % (i - dupe.0)) + dupe.0;
+            let mut total = 0;
+
+            for thing in maps_over_time[&state].clone() {
+                if thing.1 == 'O' {
+                    total += (max_j - thing.0.1 + 1);
+                }
+            }
+
+            println!("{}", total);
+            break;
+        }
+        else {
+            maps_over_time.insert(i, new_map.clone());
+        }
+    }
+}
+
+fn day14_move_north(row_count: usize, map: HashMap<(usize, usize), char>) -> HashMap<(usize, usize), char>
+{
+    let mut new_map = HashMap::<(usize, usize), char>::new();
+    
+    for j in 0..row_count {
         // for each column
         // move every `O` to the lowest down `#` north of it plus the number of `O`'s north of it
 
@@ -1487,13 +1545,116 @@ fn day14() {
         }
     }
 
-    let mut total = 0;
+    return new_map;
+}
 
-    for thing in new_map {
-        if thing.1 == 'O' {
-            total += (max_j - thing.0.1 + 1);
+fn day14_move_west(row_count: usize, map: HashMap<(usize, usize), char>) -> HashMap<(usize, usize), char>
+{
+    let mut new_map = HashMap::<(usize, usize), char>::new();
+    
+    for j in 0..row_count {
+        let map_clone = map.clone();
+        let row = map_clone.iter().filter(|z| z.0.1 == j);
+
+        for entry in row.clone() {
+            if entry.1 == &'O' {
+                let closest_rock_west = match row.clone()
+                    .filter(|x| x.1 == &'#' && x.0.0 < entry.0.0)
+                    .max_by_key(|x| x.0.0 ) {
+                        Some(a) => (*a.0, a.1) ,
+                        None => {let key = (0, entry.0.1); (key , &'#')},
+                    };
+
+                // if entry.0.0 == 0 {
+                //     println!("{:?} -> {:?}", entry, closest_rock_north);
+                // }
+
+                let number_of_round_rocks_west = 
+                    row.clone().filter(|c| c.1 == &'O' && c.0.0 > closest_rock_west.0.0 && c.0.0 < entry.0.0 ).count();
+
+                let new_key = (closest_rock_west.0.0 + number_of_round_rocks_west + 1, closest_rock_west.0.1);
+
+                new_map.insert(new_key, 'O');
+            }
+            else {
+                new_map.insert(*entry.0, *entry.1);
+            }
         }
     }
 
-    println!("{}", total);
+    return new_map;
+}
+
+fn day14_move_south(row_count: usize, map: HashMap<(usize, usize), char>) -> HashMap<(usize, usize), char>
+{
+    let mut new_map = HashMap::<(usize, usize), char>::new();
+    
+    for j in 0..row_count {
+        let map_clone = map.clone();
+        let column = map_clone.iter().filter(|z| z.0.0 == j);
+
+        for entry in column.clone() {
+            if entry.1 == &'O' {
+                let closest_rock_south = match column.clone()
+                    .filter(|x| x.1 == &'#' && x.0.1 > entry.0.1)
+                    .min_by_key(|x| x.0.1 ) {
+                        Some(a) => (*a.0, a.1) ,
+                        None => {let key = (entry.0.0, row_count); (key , &'#')}, // maybe off by one
+                    };
+
+                // if entry.0.0 == 0 {
+                //     println!("{:?} -> {:?}", entry, closest_rock_north);
+                // }
+
+                let number_of_round_rocks_south = 
+                    column.clone().filter(|c| c.1 == &'O' && c.0.1 < closest_rock_south.0.1 && c.0.1 > entry.0.1 ).count();
+
+                let new_key = (closest_rock_south.0.0, closest_rock_south.0.1 - number_of_round_rocks_south - 1);
+
+                new_map.insert(new_key, 'O');
+            }
+            else {
+                new_map.insert(*entry.0, *entry.1);
+            }
+        }
+    }
+
+    return new_map;
+}
+
+fn day14_move_east(row_count: usize, map: HashMap<(usize, usize), char>) -> HashMap<(usize, usize), char>
+{
+    let mut new_map = HashMap::<(usize, usize), char>::new();
+    
+    for j in 0..row_count {
+        let map_clone = map.clone();
+        let row = map_clone.iter().filter(|z| z.0.1 == j);
+
+        for entry in row.clone() {
+            if entry.1 == &'O' {
+                let closest_rock_east = match row.clone()
+                    .filter(|x| x.1 == &'#' && x.0.0 > entry.0.0)
+                    .min_by_key(|x| x.0.0 ) {
+                        Some(a) => (*a.0, a.1) ,
+                        None => {let key = (row_count, entry.0.1); (key , &'#')},
+                    };
+
+                // if entry.0.0 == 0 {
+                //     println!("{:?} -> {:?}", entry, closest_rock_north);
+                // }
+
+                let number_of_round_rocks_east = 
+                    row.clone().filter(|c| c.1 == &'O' && c.0.0 < closest_rock_east.0.0 && c.0.0 > entry.0.0 ).count();
+
+                let new_key = (closest_rock_east.0.0 - number_of_round_rocks_east - 1, closest_rock_east.0.1);
+
+                new_map.insert(new_key, 'O');
+            }
+            else {
+                new_map.insert(*entry.0, *entry.1);
+            }
+        }
+    }
+
+    return new_map;
 }
