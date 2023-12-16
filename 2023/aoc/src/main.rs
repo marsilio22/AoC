@@ -1,6 +1,8 @@
+use std::collections::hash_map::DefaultHasher;
 use std::fs;
 use std::collections::HashMap;
 use std::cmp::Ordering;
+use std::hash::Hash;
 use std::iter::zip;
 use std::time::Instant;
 use num::integer::lcm;
@@ -23,7 +25,8 @@ fn main() {
     // day11();
     // day12();
     // day13();
-    day14();
+    // day14();
+    day15();
     let now = Instant::now();
 
     println!("took {:?} to run", now.duration_since(then));
@@ -1657,4 +1660,76 @@ fn day14_move_east(row_count: usize, map: HashMap<(usize, usize), char>) -> Hash
     }
 
     return new_map;
+}
+
+fn day15() {
+    let contents = fs::read_to_string("./inputs/day15").expect("Should have read the file");
+    
+    let items = contents.lines().last().expect("only one line in this one").split(",");
+
+    let mut total = 0;
+
+    for item in items.clone() {
+        total += day15_hash(item);
+    }
+
+    println!("{:?}", total);
+
+    let mut boxes = HashMap::<u32, HashMap<&str, (i32, usize)>>::new(); // lens then order of insertion
+
+    for item in items.clone().enumerate() {
+        if item.1.contains("=") {
+            let mut split = item.1.split("=");
+            let label = split.next().expect("");
+            let num = split.next().expect("").parse::<i32>().expect("");
+
+            boxes
+                .entry(day15_hash(label))
+                .and_modify(|inner_map| {
+                    // why is this seem to be necessary...
+                    // why does this not work: inner_map.entry(label).and_modify(|inner_lens| { (num, inner_lens.1) }).or_insert((num, item.0));
+                    // something to do with tuples and immutability??
+                    if (inner_map.contains_key(label))
+                    {
+                        inner_map.insert(label, (num, inner_map[label].1));
+                    }
+                    else {
+                        inner_map.insert(label, (num, item.0)); 
+                        
+                    }
+                })
+                .or_insert(HashMap::<&str, (i32, usize)>::from([(label, (num, item.0))]));
+        }
+        else { 
+            let mut split = item.1.split("-");
+
+            let label = split.next().expect("");
+
+            boxes.entry(day15_hash(label)).and_modify(|inner_map| { inner_map.remove(label); });
+        }
+    }
+
+    let total = 
+        boxes.clone().iter().map(|x| {
+            x.1.values()
+                .sorted_by(|a, b| a.1.cmp(&b.1))
+                .enumerate()
+                .map(|z| {(z.0 + 1) * z.1.0 as usize * (*x.0 as usize + 1)})
+                .sum::<usize>()
+        }).sum::<usize>();
+
+
+    println!("{}", total); // 182409718 too high
+}
+
+fn day15_hash (item: &str) -> u32 {
+    let mut total = 0;
+
+    for c in item.chars() {
+        total += c as u32;
+        total *= 17;
+        total %= 256;
+    }
+
+    return total;
 }
