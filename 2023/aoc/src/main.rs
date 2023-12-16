@@ -22,7 +22,8 @@ fn main() {
     // day10();
     // day11();
     // day12();
-    day13();
+    // day13();
+    day14();
     let now = Instant::now();
 
     println!("took {:?} to run", now.duration_since(then));
@@ -1431,6 +1432,68 @@ fn day13() {
 
     // NB ALSO need to find ALL lines, and only pick the ones that are different, instead of failing fast
     // this is probably a good place to start, editing p1 to do this 
-    
+
     //p2 25676 too low 
+}
+
+fn day14() {
+    let contents = fs::read_to_string("./inputs/day14").expect("Should have read the file");
+    let rows = contents.lines();
+
+    let mut map = HashMap::<(usize, usize), char>::new();
+    let mut max_j = 0;
+    for (j, r) in rows.clone().enumerate() {
+        for (i, c) in r.chars().enumerate() {
+            if c != '.' {
+                // hack this to start at index 1 for reasons of usize being unsigned, and needingto denote the top of the map later
+                map.insert((i.try_into().unwrap(), (j+1).try_into().unwrap()), c);
+            }
+        }
+        max_j = j + 1; // fml
+    }
+
+    let mut new_map = HashMap::<(usize, usize), char>::new();
+
+    for j in 0..rows.clone().count() {
+        // for each column
+        // move every `O` to the lowest down `#` north of it plus the number of `O`'s north of it
+
+        let map_clone = map.clone();
+        let column = map_clone.iter().filter(|z| z.0.0 == j);
+
+        for entry in column.clone() {
+            if entry.1 == &'O' {
+                let closest_rock_north = match column.clone()
+                    .filter(|x| x.1 == &'#' && x.0.1 < entry.0.1)
+                    .max_by_key(|x| x.0.1 ) {
+                        Some(a) => (*a.0, a.1) ,
+                        None => {let key = (entry.0.0, 0); (key , &'#')},
+                    };
+
+                // if entry.0.0 == 0 {
+                //     println!("{:?} -> {:?}", entry, closest_rock_north);
+                // }
+
+                let number_of_round_rocks_north = 
+                    column.clone().filter(|c| c.1 == &'O' && c.0.1 > closest_rock_north.0.1 && c.0.1 < entry.0.1 ).count();
+
+                let new_key = (closest_rock_north.0.0, closest_rock_north.0.1 + number_of_round_rocks_north + 1);
+
+                new_map.insert(new_key, 'O');
+            }
+            else {
+                new_map.insert(*entry.0, *entry.1);
+            }
+        }
+    }
+
+    let mut total = 0;
+
+    for thing in new_map {
+        if thing.1 == 'O' {
+            total += (max_j - thing.0.1 + 1);
+        }
+    }
+
+    println!("{}", total);
 }
