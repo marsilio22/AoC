@@ -1313,8 +1313,9 @@ fn day13() {
 
     let mut current = vec![];
 
-    let mut total = 0;
-
+    let mut total = HashMap::<i32, i32>::new(); // map index to score
+    let mut index = 0;
+    
     loop { 
         let row = match rows.next() {
             Some(a) => a,
@@ -1324,46 +1325,112 @@ fn day13() {
         if row.is_empty() {
             maps.push(current);
             current = vec![];
+            continue;
         }
 
         current.push(row);
     }
 
+    // we never add the last map, because it breaks before it gets there. Hack
+    maps.push(current);
+
     for map in maps {
         // check rows
         let mut it_was_a_row = false;
+
+        println!("{:?}", map);
 
         for row in map.clone().iter().enumerate() {
             if map.len() > row.0 + 1 {
                 // this isn't yet the last row, so check whether this matches the *next* row
                 if row.1.eq(&map[row.0 + 1]) {
-                    total += (100 * row.0);
-                    it_was_a_row = true;
-                    break;
+                    // now we need to check every surrounding pair for equality, until we fall off one way or the other
+                    let set_1 = map.iter().take(row.0 + 1).rev();
+                    let set_2 = map.iter().skip(row.0 + 1);
+
+                    // zip works how we want it to, and discards tuples where either iterator was None
+                    let mut valid = true;
+                    for pair in set_1.zip(set_2) {
+
+                        println!("pair = {:?}", pair);
+
+                        if pair.0 != pair.1 {
+                            valid = false;
+                            break;
+                        }
+                    }
+
+                    if valid == true {
+                        total.insert(index, (100 * (row.0 + 1)).try_into().unwrap());
+                        it_was_a_row = true;
+                        index += 1;
+                        break;
+                    }
                 }
             }
         }
 
-        if it_was_a_row { println!("row"); continue; }
+        if it_was_a_row { continue; }
 
         // check cols
-        for col in map[0].chars().enumerate() {
-            let mut strb_1 = Builder::default();
-            let mut strb_2 = Builder::default();
 
-            for row in map.clone() {
-                strb_1.append(row.chars().skip(col.0 - 1).next().expect(""));
-                strb_2.append(row.chars().skip(col.0).next().expect(""));
+        let mut strb = Builder::default();
+
+        for i in 0..map[0].len() {
+            for row in map.clone().iter().rev() {
+                strb.append(row.chars().skip(i).next().expect(""));
             }
+            strb.append("-");
+        }
 
-            println!("{}, {}", strb_1.string().expect(""), strb_2.string().expect(""));
+        // hack around string references in loop
+        let constructed_string = strb.string().expect("");
+        let new_rows = constructed_string.split("-").filter(|x| !x.is_empty()).collect::<Vec<&str>>();
 
-            // if strb_1.string().expect("") .eq(&strb_2.string().expect("")) {
-            //     total += col.0;
-            //     break;
-            // }
+        // literally copy paste of the above logic for rows, again
+        println!("{:?}", new_rows);
+        for row in new_rows.iter().enumerate() {
+            if new_rows.len() > row.0 + 1 {
+                // this isn't yet the last row, so check whether this matches the *next* row
+                if row.1.eq(&new_rows[row.0 + 1]) {
+                    // now we need to check every surrounding pair for equality, until we fall off one way or the other
+                    let set_1 = new_rows.iter().take(row.0 + 1).rev();
+                    let set_2 = new_rows.iter().skip(row.0 + 1);
+
+                    // zip works how we want it to, and discards tuples where either iterator was None
+                    let mut valid = true;
+                    for pair in set_1.zip(set_2) {
+
+                        println!("pair = {:?}", pair);
+
+                        if pair.0 != pair.1 {
+                            valid = false;
+                            break;
+                        }
+                    }
+
+                    if valid == true { 
+                        total.insert(index, (row.0 + 1).try_into().unwrap());
+                        index += 1;
+                        break; 
+                    }
+                }
+            }
         }
     }
 
-    println!("{}", total);
+    println!("{}", total.values().sum::<i32>());
+
+
+    // now for each map we want to:
+    // - change a single entry, 
+    // - check the score, and 
+    // - *change* the value in `total` if and only if the new score is:
+    //   - *different*, and 
+    //   - *non-zero*
+
+    // NB ALSO need to find ALL lines, and only pick the ones that are different, instead of failing fast
+    // this is probably a good place to start, editing p1 to do this 
+    
+    //p2 25676 too low 
 }
