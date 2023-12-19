@@ -1,8 +1,6 @@
-use std::collections::hash_map::DefaultHasher;
 use std::fs;
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::cmp::Ordering;
-use std::hash::Hash;
 use std::iter::zip;
 use std::time::Instant;
 use num::integer::lcm;
@@ -26,7 +24,11 @@ fn main() {
     // day12();
     // day13();
     // day14();
-    day15();
+    // day15();
+
+
+    day18();
+    // day19();
     let now = Instant::now();
 
     println!("took {:?} to run", now.duration_since(then));
@@ -1719,7 +1721,7 @@ fn day15() {
         }).sum::<usize>();
 
 
-    println!("{}", total); // 182409718 too high
+    println!("{}", total);
 }
 
 fn day15_hash (item: &str) -> u32 {
@@ -1732,4 +1734,214 @@ fn day15_hash (item: &str) -> u32 {
     }
 
     return total;
+}
+
+fn day16() {
+    let contents = fs::read_to_string("./inputs/day15").expect("Should have read the file");
+    let rows = contents.lines();
+
+    let mut map = HashMap::<(i32, i32), char>::new();
+
+    for (j, r) in rows.enumerate() {
+        for (i, c) in r.chars().enumerate() {
+            if c != '.' {
+                map.insert((i.try_into().unwrap(), j.try_into().unwrap()), c);
+            }
+        }
+    }
+
+    let mut energize_map = HashSet::<(i32, i32)>::new();
+
+    let curr = (-1, 0);
+    let dir = '>';
+
+    let mut to_calc = Vec::<((i32, i32), char)>::new();
+
+    to_calc.push((curr, dir));
+
+    while !to_calc.is_empty()
+    {
+        let this_round = to_calc.pop().expect("already checked for emptiness"); // could probably move the assignment and check to the while def but wevs
+
+        // follow this thing to its endpoint, adding splits to the to_calc as we go
+        loop {
+            let mut dir = match this_round.1  {
+                '>' => (1, 0),
+                '<' => (-1, 0),
+                '^' => (0, -1),
+                'v' => (0, 1),
+                _ => panic!("jwjf")
+            };
+
+            let mut next = (this_round.0.0 + dir.0, this_round.0.1 + dir.1);
+
+            // exit if this falls off the map?
+            while !map.contains_key(&next) {
+                energize_map.insert(next);
+
+                next = (next.0 + dir.0, next.1 + dir.1);
+            }
+
+            // we've found something in the map, decide what to do
+        }
+    }
+}
+
+fn day18() {
+    let contents = fs::read_to_string("./inputs/day18").expect("Should have read the file");
+    let rows = contents.lines();
+
+    let mut map = HashMap::<(i32, i32), &str>::new();
+    let mut current = (0, 0);
+    map.insert(current, "unknown");
+
+    let mut prev_dir = "R";
+
+    for row in rows {
+        let mut split = row.split(" ");
+
+        let dir = split.next().expect("");
+        let distance = split.next().expect("").parse::<i32>().expect("");
+        let colour = split.next().expect("");
+
+        let (direction , inside)= match dir {
+            "U" => ((0, 1), (1, 0)),    // I've made up be the positive Y direction and it's rather confusing when printing...
+            "D" => ((0, -1), (-1, 0)),
+            "L" => ((-1, 0), (0, 1)),
+            "R" => ((1, 0), (0, -1)),
+            _ => panic!()
+        };
+
+        // when we turn an internal corner, need to place an `I` directly behind where we just started
+        if (dir == "U" && prev_dir == "R") || (dir == "D" && prev_dir == "L") 
+            || (dir == "R" && prev_dir == "D") || (dir == "L" && prev_dir == "U")
+        {
+            map.insert((current.0 - direction.0, current.1 - direction.1), "I");
+        }
+
+        prev_dir = dir;
+
+        for i in 0..distance {
+            map.insert((current.0 + i*direction.0, current.1 + i*direction.1), colour);
+
+            let inside_key = (current.0 + i*direction.0 + inside.0, current.1 + i*direction.1 + inside.1);
+            if !map.contains_key(&inside_key)
+            {
+                map.insert(inside_key, "I");
+            }
+        }
+
+        current = (current.0 + distance * direction.0, current.1 + distance * direction.1);
+    }
+
+    let mut min_i = 0;
+    let mut max_i = 0;
+    let mut min_j = 0;
+    let mut max_j = 0;
+
+    for thing in map.clone() {
+        if thing.0.0 < min_i { min_i = thing.0.0; }
+        if thing.0.0 > max_i { max_i = thing.0.0; }
+        if thing.0.1 < min_j { min_j = thing.0.1; }
+        if thing.0.1 > max_j { max_j = thing.0.1; }
+    }
+
+    for j in min_j..max_j+1 {
+        for i in min_i..max_i+1 {
+            if map.clone().contains_key(&(i, j)) {
+                if i == 0 && j == 0 { print!("0");}
+                else if map[&(i, j)] == "I" {print!("I")} 
+                else {print!("#")}
+            }
+            else {
+                print!(" ");
+            }
+        }
+        println!();
+    }
+
+    // the first instruction is R 3. By observation, R 4 is *inside* the shape
+
+    // let mut to_check = vec![(0, 5)];
+
+    // while !to_check.is_empty() {
+    //     let next = to_check.pop().expect("");
+
+    //     if map.insert(next, "#").is_some() {
+    //         panic!()
+    //     };
+
+    //     let new_keys = vec![
+    //         (next.0, next.1 + 1),
+    //         (next.0, next.1 - 1),
+    //         (next.0 + 1, next.1),
+    //         (next.0 - 1, next.1)
+    //     ];
+
+    //     for k in new_keys.iter().filter(|k| !map.contains_key(k)) {
+    //         to_check.push(*k);
+    //     }
+
+    //     // println!("{}", map.keys().count());
+    // }
+
+    // println!("{}", map.keys().count());
+    
+    
+    // special cases #I#, #II#
+    // need to count chunks of `I`s and then count the spaces between those chunks
+
+    // for each entry in a row (including things that aren't in the map)
+    // if this entry is a '#', and the next entry is an 'I', start counting (but don't forget to add the 'I')
+    // if this entry is an 'I', and the next entry is a '#', stop counting
+    // if this entry is a '#' and the next entry isn't an 'I', just add one
+
+    let mut total = 0;
+    for j in min_j..max_j + 1 {
+        let mut currently_counting = false;
+
+        for i in min_i..max_i + 1 {
+            if map.clone().contains_key(&(i, j)) {
+                if map.clone().contains_key(&(i+1, j)) {
+                    if map[&(i, j)].contains("#") && map[&(i+1, j)] == "I" {
+                        currently_counting = true;
+                    }
+
+                    if map[&(i, j)] == "I" && map[&(i+1, j)].contains("#") {
+                        total += 1;
+                        currently_counting = false;
+                    }
+                }
+
+                if map[&(i, j)].contains("#") {
+                    total += 1;
+                }
+                else if currently_counting {
+                    total += 1;
+                }
+            }
+            else if currently_counting {
+                total += 1;
+            }
+        }
+    }
+
+    println!("{}", total);
+}
+
+fn day19() {
+    let contents = fs::read_to_string("./inputs/day18").expect("Should have read the file");
+    let mut rows = contents.lines();
+
+    loop {
+        let row = rows.next().expect("");
+        if row.is_empty() { break; }
+
+        // split by { to get the name of the thing
+        // split by , to split up the instructions
+        // split by : to determine where pieces go based on the test with special cases for R and A
+        // check for < > , x m a s, etc to see what the test actually is
+
+        // make a dict by name, of the tests (as functions of tuples? as functions of a class?)
+    }
 }
