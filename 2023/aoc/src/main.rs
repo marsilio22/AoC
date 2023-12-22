@@ -27,8 +27,10 @@ fn main() {
     // day15();
 
 
-    day18();
+    // day18();
     // day19();
+
+    day21();
     let now = Instant::now();
 
     println!("took {:?} to run", now.duration_since(then));
@@ -1791,142 +1793,67 @@ fn day18() {
     let contents = fs::read_to_string("./inputs/day18").expect("Should have read the file");
     let rows = contents.lines();
 
-    let mut map = HashMap::<(i32, i32), &str>::new();
+    let mut map = HashMap::<usize, (i32, i32)>::new();
+    let mut map_p2 = HashMap::<usize, (i32, i32)>::new();
+
     let mut current = (0, 0);
-    map.insert(current, "unknown");
+    let mut current_p2 = (0, 0);
 
-    let mut prev_dir = "R";
+    map.insert(0, current);
+    map_p2.insert(0, current_p2);
 
-    for row in rows {
-        let mut split = row.split(" ");
+    let mut perimeter = 0;
+    let mut perimeter_p2 = 0;
+    for row in rows.clone().enumerate() {
+        let mut split = row.1.split(" ");
 
         let dir = split.next().expect("");
         let distance = split.next().expect("").parse::<i32>().expect("");
-        let colour = split.next().expect("");
 
-        let (direction , inside)= match dir {
-            "U" => ((0, 1), (1, 0)),    // I've made up be the positive Y direction and it's rather confusing when printing...
-            "D" => ((0, -1), (-1, 0)),
-            "L" => ((-1, 0), (0, 1)),
-            "R" => ((1, 0), (0, -1)),
+        perimeter += distance;
+
+        let direction= match dir {
+            "U" => (0, -1),
+            "D" => (0, 1),
+            "L" => (-1, 0),
+            "R" => (1, 0),
             _ => panic!()
         };
 
-        // when we turn an internal corner, need to place an `I` directly behind where we just started
-        if (dir == "U" && prev_dir == "R") || (dir == "D" && prev_dir == "L") 
-            || (dir == "R" && prev_dir == "D") || (dir == "L" && prev_dir == "U")
-        {
-            map.insert((current.0 - direction.0, current.1 - direction.1), "I");
-        }
+        let next = (current.0 + distance*direction.0, current.1 + distance*direction.1);
 
-        prev_dir = dir;
+        map.insert(row.0 + 1, next);
+        
+        current = next;
 
-        for i in 0..distance {
-            map.insert((current.0 + i*direction.0, current.1 + i*direction.1), colour);
+        let colour = split.next().expect("").split("(#").last().expect("").split(")").next().expect("");
 
-            let inside_key = (current.0 + i*direction.0 + inside.0, current.1 + i*direction.1 + inside.1);
-            if !map.contains_key(&inside_key)
-            {
-                map.insert(inside_key, "I");
-            }
-        }
+        let distance_p2 = i32::from_str_radix(&colour[..5], 16).expect("");
+        let direction_p2 = if colour.ends_with("0") {(1, 0)} else if colour.ends_with("1") {(0, 1)} else if colour.ends_with("2") {(-1, 0)} else {(0, -1)};
 
-        current = (current.0 + distance * direction.0, current.1 + distance * direction.1);
+        perimeter_p2 += distance_p2;
+
+        let next_p2 = (current_p2.0 + distance_p2 * direction_p2.0, current_p2.1 + distance_p2 * direction_p2.1);
+
+        map_p2.insert(row.0 + 1, next_p2);
+        current_p2 = next_p2;
     }
-
-    let mut min_i = 0;
-    let mut max_i = 0;
-    let mut min_j = 0;
-    let mut max_j = 0;
-
-    for thing in map.clone() {
-        if thing.0.0 < min_i { min_i = thing.0.0; }
-        if thing.0.0 > max_i { max_i = thing.0.0; }
-        if thing.0.1 < min_j { min_j = thing.0.1; }
-        if thing.0.1 > max_j { max_j = thing.0.1; }
-    }
-
-    for j in min_j..max_j+1 {
-        for i in min_i..max_i+1 {
-            if map.clone().contains_key(&(i, j)) {
-                if i == 0 && j == 0 { print!("0");}
-                else if map[&(i, j)] == "I" {print!("I")} 
-                else {print!("#")}
-            }
-            else {
-                print!(" ");
-            }
-        }
-        println!();
-    }
-
-    // the first instruction is R 3. By observation, R 4 is *inside* the shape
-
-    // let mut to_check = vec![(0, 5)];
-
-    // while !to_check.is_empty() {
-    //     let next = to_check.pop().expect("");
-
-    //     if map.insert(next, "#").is_some() {
-    //         panic!()
-    //     };
-
-    //     let new_keys = vec![
-    //         (next.0, next.1 + 1),
-    //         (next.0, next.1 - 1),
-    //         (next.0 + 1, next.1),
-    //         (next.0 - 1, next.1)
-    //     ];
-
-    //     for k in new_keys.iter().filter(|k| !map.contains_key(k)) {
-    //         to_check.push(*k);
-    //     }
-
-    //     // println!("{}", map.keys().count());
-    // }
-
-    // println!("{}", map.keys().count());
-    
-    
-    // special cases #I#, #II#
-    // need to count chunks of `I`s and then count the spaces between those chunks
-
-    // for each entry in a row (including things that aren't in the map)
-    // if this entry is a '#', and the next entry is an 'I', start counting (but don't forget to add the 'I')
-    // if this entry is an 'I', and the next entry is a '#', stop counting
-    // if this entry is a '#' and the next entry isn't an 'I', just add one
 
     let mut total = 0;
-    for j in min_j..max_j + 1 {
-        let mut currently_counting = false;
+    let mut total_p2: i64 = 0;
+    
+    for i in 0.. rows.clone().count() + 1 {
+        let x0y0 = map[&i];
+        let x1y1 = if map.contains_key(&(i+1)) { map[&(i+1)]} else { map[&0] };
+        total += x0y0.0 * x1y1.1 - x0y0.1 * x1y1.0;
 
-        for i in min_i..max_i + 1 {
-            if map.clone().contains_key(&(i, j)) {
-                if map.clone().contains_key(&(i+1, j)) {
-                    if map[&(i, j)].contains("#") && map[&(i+1, j)] == "I" {
-                        currently_counting = true;
-                    }
-
-                    if map[&(i, j)] == "I" && map[&(i+1, j)].contains("#") {
-                        total += 1;
-                        currently_counting = false;
-                    }
-                }
-
-                if map[&(i, j)].contains("#") {
-                    total += 1;
-                }
-                else if currently_counting {
-                    total += 1;
-                }
-            }
-            else if currently_counting {
-                total += 1;
-            }
-        }
+        let x0y0_p2 = map_p2[&i];
+        let x1y1_p2 = if map_p2.contains_key(&(i+1)) { map_p2[&(i+1)]} else { map_p2[&0] };
+        total_p2 += i64::from(x0y0_p2.0) * i64::from(x1y1_p2.1) - i64::from(x0y0_p2.1) * i64::from(x1y1_p2.0);
     }
-
-    println!("{}", total);
+    
+    println!("{}", (total + perimeter)/2 + 1);
+    println!("{}", (total_p2 + i64::from(perimeter_p2))/2 + 1);
 }
 
 fn day19() {
@@ -1944,4 +1871,67 @@ fn day19() {
 
         // make a dict by name, of the tests (as functions of tuples? as functions of a class?)
     }
+}
+
+fn day21() {
+        let contents = fs::read_to_string("./inputs/day21").expect("Should have read the file");
+    let rows = contents.lines();
+
+    let mut map = HashMap::<(i32, i32), char>::new();
+
+    let mut start = (0, 0);
+
+    for (j, r) in rows.enumerate() {
+        for (i, c) in r.chars().enumerate() {
+            if c == '#' { 
+                continue;
+            }
+
+            if c == 'S' { 
+                start = (i.try_into().unwrap(), j.try_into().unwrap());
+                map.insert(start, '.');
+            }
+            else {
+                map.insert((i.try_into().unwrap(), j.try_into().unwrap()), c);
+            }
+        }
+    }
+
+    let mut distances = HashMap::<(i32, i32), HashSet<i32>>::new();
+
+    distances.insert(start, HashSet::<i32>::new());
+
+    for i in 0..64 {
+        // lets start just by figuring out how far we can get in 64. Suspect part 2 will be some ludicrously big number but the key will be 
+        // the divisors of it,
+
+        for coord in distances.clone() {
+            if i == 0 || coord.1.contains(&i32::from(i)) {
+                for thing in vec![(0, 1), (0, -1), (1, 0), (-1, 0)]
+                {
+                    let key = (coord.0.0 + thing.0, coord.0.1 + thing.1);
+                    if !map.contains_key(&key) {continue;}
+                        
+                    if distances.contains_key(&key)
+                    { 
+                        let mut clone = distances[&key].clone();
+                        clone.insert(i+1);
+
+                        distances.insert(key, clone);
+                    }
+                    else {
+                        let mut hs = HashSet::<i32>::new();
+                        hs.insert(i+1);
+                        
+                        distances.insert(key, hs);
+                    }
+                }
+            }
+        }
+    }
+
+    let count = distances.clone().iter().filter(|x| x.1.contains(&64)).count();
+
+    println!("{:?}", distances.clone());
+    println!("{}", count);
 }
