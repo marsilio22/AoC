@@ -1909,7 +1909,9 @@ fn day21() {
                     let key = (coord.0.0 + thing.0, coord.0.1 + thing.1);
                     if !map.contains_key(&key) {continue;}
                     
-                    distances.insert(key, i+1);
+                    if !distances.contains_key(&key) {
+                        distances.insert(key, i+1);
+                    }
                 }
             }
         }
@@ -1926,13 +1928,15 @@ fn day21() {
         last_loop = distances.clone().iter().count();
 
         for coord in distances.clone() {
-            if i == 0 || coord.1 == i {
+            if coord.1 == i {
                 for thing in vec![(0, 1), (0, -1), (1, 0), (-1, 0)]
                 {
                     let key = (coord.0.0 + thing.0, coord.0.1 + thing.1);
                     if !map.contains_key(&key) {continue;}
                     
-                    distances.insert(key, i+1);
+                    if !distances.contains_key(&key) {
+                        distances.insert(key, i+1);
+                    }
                 }
             }
         }
@@ -1940,100 +1944,34 @@ fn day21() {
         i += 1;
     }
     
-    // while 26501365 - i * 131 > 131 {
-        // add 4*i (or 1 if i == 0) copies of the odd or even config count number (odd if i % 2 == 0) to the total
-        // i += 1;
-    // }
-    // add i copiesof each internal semidiagonal from the 5*5 ((1, 1), (3, 1), (1, 3), (3, 3))
-    // add 2*i copies of each external semidiagonal from the 5*5 ((0, 1), (3, 0), (0, 3), (4, 3))
-    // add 1 copy of each chevron end from the 5*5 ((2, 0), (0, 2), (4, 2), (2, 4))
-    
     let mut total = 0;
-    let target: i128 = 26501365 / 131;
+    let target: i128 = 26501365 / 131; // 202299
 
     let even = distances.clone().iter().filter(|x| x.1 % 2 == 0).count() as i128;
     let odd = distances.clone().iter().filter(|x| x.1 % 2 == 1).count() as i128;
 
     // this just skips iterating odd then even and adding 4*even or 4*odd to each thing, for i in 1..target ...
-    total += (target/2 * (1 + (target/2))) * 4 * even;
-    total += ((target/2 + 1) * (2 + (target)))/2 * 4 * odd; 
+    // notice that the numbers in the odd/even columns below are just squares
+    /*
+        |    n | odd | even |
+        |    0 |   1 |    0 |
+        |    1 |   1 |    4 |
+        |    2 |   9 |    4 |
+        |    3 |   9 |   16 |
+        ...
+     */
+
+    // so even is n^2 and odd is (n+1)^ 2 (because n is 202300, which itself is even)
+    total += target * target * even;
+    total += (target + 1) * (target + 1) * odd; 
 
     // now need to sort out the edge triangles 
-    
-    // build a 5*5 map
-    // do 131*2 + 65 steps
-    // add various shit to various places
+    let corners = distances.clone().iter().filter(|x| x.1 > &65).map(|x| (*x.0, *x.1)).collect::<HashMap<(i32, i32), i32>>();
 
-    let mut map = HashMap::<(i32, i32), char>::new();
+    // there are n squares where we haven't yet accounted for an additional corner, and n+1 squares where we have overcounted a corner (actually there are 4n and 4(n+1) quarter squares but wevs)
+    // so remove those.
+    total += target * corners.clone().iter().filter(|x| x.1 % 2 == 0).count() as i128;
+    total -= (target + 1) * corners.clone().iter().filter(|x| x.1 % 2 == 1).count() as i128;
 
-    let mut start = (0, 0);
-    
-    for (j, r) in rows.clone().enumerate() {
-        for (i, c) in r.chars().enumerate() {
-            if c == '#' { 
-                continue;
-            }
-
-            if c == 'S' { 
-                start = (i.try_into().unwrap(), j.try_into().unwrap());
-
-                for p in 0..5 {
-                    for q in 0..5 {
-                        map.insert((start.0 + p * 131, start.1 + q*131), '.');
-                    }
-                }
-
-                start = (start.0 + 2*131, start.1 + 2*131);
-            }
-            else {
-                let key: (i32, i32) = (i.try_into().unwrap(), j.try_into().unwrap());
-                
-                for p in 0..5 {
-                    for q in 0..5 {
-                        map.insert((key.0 + p * 131, key.1 + q*131), 'c');
-                    }
-                }
-            }
-        }
-    }
-
-    let mut distances = HashMap::<(i32, i32), i32>::new();
-
-    distances.insert(start, 0);
-
-    for i in 0..(2*131 + 65) {
-        for coord in distances.clone() {
-            if i == 0 || coord.1 == i {
-                for thing in vec![(0, 1), (0, -1), (1, 0), (-1, 0)]
-                {
-                    let key = (coord.0.0 + thing.0, coord.0.1 + thing.1);
-                    if !map.contains_key(&key) {continue;}
-                    
-                    distances.insert(key, i+1);
-                }
-            }
-        }
-    }
-
-    for j in 0.. 5*131 {
-        for i in 0.. 5*131 {
-            let key = (i, j);
-            if distances.contains_key(&key) {
-                print!("{}", if distances[&key] % 2 == 0 { "E" } else { "O" });
-            }
-            else if map.contains_key(&key) {
-                print!(".");
-            }
-            else {
-                print!(" ");
-            }
-        }
-        println!();
-    }
-
-
-
-
-    println!("{}", total); // 639046816913400 too low
-                           // 639057875471784 too high
+    println!("{}", total);  
 }
