@@ -1881,7 +1881,7 @@ fn day21() {
 
     let mut start = (0, 0);
 
-    for (j, r) in rows.enumerate() {
+    for (j, r) in rows.clone().enumerate() {
         for (i, c) in r.chars().enumerate() {
             if c == '#' { 
                 continue;
@@ -1897,41 +1897,143 @@ fn day21() {
         }
     }
 
-    let mut distances = HashMap::<(i32, i32), HashSet<i32>>::new();
+    let mut distances = HashMap::<(i32, i32), i32>::new();
 
-    distances.insert(start, HashSet::<i32>::new());
+    distances.insert(start, 0);
 
     for i in 0..64 {
-        // lets start just by figuring out how far we can get in 64. Suspect part 2 will be some ludicrously big number but the key will be 
-        // the divisors of it,
-
         for coord in distances.clone() {
-            if i == 0 || coord.1.contains(&i32::from(i)) {
+            if i == 0 || coord.1 == i {
                 for thing in vec![(0, 1), (0, -1), (1, 0), (-1, 0)]
                 {
                     let key = (coord.0.0 + thing.0, coord.0.1 + thing.1);
                     if !map.contains_key(&key) {continue;}
-                        
-                    if distances.contains_key(&key)
-                    { 
-                        let mut clone = distances[&key].clone();
-                        clone.insert(i+1);
+                    
+                    distances.insert(key, i+1);
+                }
+            }
+        }
+    }
 
-                        distances.insert(key, clone);
+    let count = distances.clone().iter().filter(|x| x.1 % 2 == 0).count();
+
+    println!("{}", count);
+
+    let mut i = 64;
+    let mut last_loop = 1;
+    
+    while distances.clone().iter().count() > last_loop { 
+        last_loop = distances.clone().iter().count();
+
+        for coord in distances.clone() {
+            if i == 0 || coord.1 == i {
+                for thing in vec![(0, 1), (0, -1), (1, 0), (-1, 0)]
+                {
+                    let key = (coord.0.0 + thing.0, coord.0.1 + thing.1);
+                    if !map.contains_key(&key) {continue;}
+                    
+                    distances.insert(key, i+1);
+                }
+            }
+        }
+
+        i += 1;
+    }
+    
+    // while 26501365 - i * 131 > 131 {
+        // add 4*i (or 1 if i == 0) copies of the odd or even config count number (odd if i % 2 == 0) to the total
+        // i += 1;
+    // }
+    // add i copiesof each internal semidiagonal from the 5*5 ((1, 1), (3, 1), (1, 3), (3, 3))
+    // add 2*i copies of each external semidiagonal from the 5*5 ((0, 1), (3, 0), (0, 3), (4, 3))
+    // add 1 copy of each chevron end from the 5*5 ((2, 0), (0, 2), (4, 2), (2, 4))
+    
+    let mut total = 0;
+    let target: i128 = 26501365 / 131;
+
+    let even = distances.clone().iter().filter(|x| x.1 % 2 == 0).count() as i128;
+    let odd = distances.clone().iter().filter(|x| x.1 % 2 == 1).count() as i128;
+
+    // this just skips iterating odd then even and adding 4*even or 4*odd to each thing, for i in 1..target ...
+    total += (target/2 * (1 + (target/2))) * 4 * even;
+    total += ((target/2 + 1) * (2 + (target)))/2 * 4 * odd; 
+
+    // now need to sort out the edge triangles 
+    
+    // build a 5*5 map
+    // do 131*2 + 65 steps
+    // add various shit to various places
+
+    let mut map = HashMap::<(i32, i32), char>::new();
+
+    let mut start = (0, 0);
+    
+    for (j, r) in rows.clone().enumerate() {
+        for (i, c) in r.chars().enumerate() {
+            if c == '#' { 
+                continue;
+            }
+
+            if c == 'S' { 
+                start = (i.try_into().unwrap(), j.try_into().unwrap());
+
+                for p in 0..5 {
+                    for q in 0..5 {
+                        map.insert((start.0 + p * 131, start.1 + q*131), '.');
                     }
-                    else {
-                        let mut hs = HashSet::<i32>::new();
-                        hs.insert(i+1);
-                        
-                        distances.insert(key, hs);
+                }
+
+                start = (start.0 + 2*131, start.1 + 2*131);
+            }
+            else {
+                let key: (i32, i32) = (i.try_into().unwrap(), j.try_into().unwrap());
+                
+                for p in 0..5 {
+                    for q in 0..5 {
+                        map.insert((key.0 + p * 131, key.1 + q*131), 'c');
                     }
                 }
             }
         }
     }
 
-    let count = distances.clone().iter().filter(|x| x.1.contains(&64)).count();
+    let mut distances = HashMap::<(i32, i32), i32>::new();
 
-    println!("{:?}", distances.clone());
-    println!("{}", count);
+    distances.insert(start, 0);
+
+    for i in 0..(2*131 + 65) {
+        for coord in distances.clone() {
+            if i == 0 || coord.1 == i {
+                for thing in vec![(0, 1), (0, -1), (1, 0), (-1, 0)]
+                {
+                    let key = (coord.0.0 + thing.0, coord.0.1 + thing.1);
+                    if !map.contains_key(&key) {continue;}
+                    
+                    distances.insert(key, i+1);
+                }
+            }
+        }
+    }
+
+    for j in 0.. 5*131 {
+        for i in 0.. 5*131 {
+            let key = (i, j);
+            if distances.contains_key(&key) {
+                print!("{}", if distances[&key] % 2 == 0 { "E" } else { "O" });
+            }
+            else if map.contains_key(&key) {
+                print!(".");
+            }
+            else {
+                print!(" ");
+            }
+        }
+        println!();
+    }
+
+
+
+
+    println!("{}", total); // 639046816913400 too low
+                           // 639057875471784 too high
 }
