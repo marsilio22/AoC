@@ -1975,3 +1975,19 @@ fn day21() {
 
     println!("{}", total);  
 }
+
+fn day22() {
+    let contents = fs::read_to_string("./inputs/day22").expect("Should have read the file");
+    let rows = contents.lines();
+
+    let mut map = HashSet::<(i32, i32, i32)>::new();
+
+    for line in rows.clone() {
+        let mut split = line.split("~");
+
+        let start = split.next().expect("").split(",").map(|x| x.parse::<i32>().expect(""));
+        let end = split.next().expect("").split(",").map(|x| x.parse::<i32>().expect(""));
+
+        
+    }
+}
