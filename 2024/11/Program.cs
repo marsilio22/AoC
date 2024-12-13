@@ -2,23 +2,18 @@
 
 var start = line.Split(" ").Select(n => long.Parse(n)).ToArray();
 
-var seenBefore = new HashSet<long>();
+// a record of each possible value, and what they turn into.
+var cache = new Dictionary<long, ICollection<long>>();
 
 while (start.Any())
 {
-    // foreach(var item in start)
-    // {
-    //     Console.Write(item.ToString() + " ");
-    // }
-    // Console.WriteLine();
-
-    var next = new List<long>();
+    var nextSet = new List<long>();
 
     foreach(var thing in start)
     {
-        if(!seenBefore.Contains(thing))
+        if(!cache.ContainsKey(thing))
         {
-            seenBefore.Add(thing);
+            var next = new List<long>();
             
             if (thing == 0)
             {
@@ -38,10 +33,41 @@ while (start.Any())
             {
                 next.Add(thing * 2024);
             }
+            
+            cache.Add(thing, next);
+            nextSet.AddRange(next);
         }
     }
 
-    start = next.ToArray();
+    start = nextSet.ToArray();
 }
 
-Console.WriteLine(seenBefore.Count);
+// a record of how many of each value we currently have
+Dictionary<long, long> values = line.Split(" ").Select(n => long.Parse(n)).ToDictionary(c => c, _ => 1l);
+
+for (int i = 0; i < 75; i++)
+{
+    // terminology here is insanely confusing but basically
+    // - Take the current set of values, and the counts of how many they are
+    // - for each one, look in the Cache and see what they turn into
+    // - add COUNT of those to the next set of values
+    // - repeat
+    var nextValues = new Dictionary<long, long>();
+
+    foreach((long val, long existingCount) in values)
+    {
+        var nexts = cache[val];
+
+        foreach(var next in nexts)
+        {
+            var nextCountSoFar = nextValues.GetValueOrDefault(next, 0);
+            nextValues[next] = nextCountSoFar + existingCount;
+        }
+    }
+
+    values = nextValues;
+    if (i == 24 || i == 74)
+    {
+        Console.WriteLine(values.Values.Sum());
+    }
+}
